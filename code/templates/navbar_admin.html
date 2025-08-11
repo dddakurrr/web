@@ -1,0 +1,63 @@
+<nav class="main-header navbar navbar-expand navbar-white navbar-light">
+  <div class="container-fluid">
+    <ul class="navbar-nav">
+      <!-- untuk membuka sidebar-->
+      <li class="nav-item">
+        <a href="#" class="nav-link" data-widget="pushmenu" role="button">
+          <i class="bi bi-list fs-4"></i>
+        </a>
+      </li>
+
+      <!--Dashboard-->
+      <li class="nav-item d-none d-sm-inline-block">
+        <a class="nav-link" href="{{ url_for('home') }}">Dashboard</a>
+      </li>
+
+      <!-- Dataset -->
+      <li class="nav-item d-none d-sm-inline-block">
+        <a class="nav-link" href="{{ url_for('ambil_dataset') }}">Dataset</a>
+      </li>
+
+      <!-- Analisis -->
+      <li class="nav-item dropdown d-none d-sm-inline-block">
+        <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">Analisis DBSCAN</a>
+        <ul class="dropdown-menu">
+          <li>
+            <a class="dropdown-item" href="{{ url_for('prepro') }}">Preprocessing</a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('jarak') }}">Matriks Jarak</a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('hitung') }}">Clustering DBSCAN</a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('nilai') }}">Silhouette Coefficient</a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('visualisasi_peta') }}">Peta Sebaran Pasien</a>
+          </li>
+        </ul>
+      </li>
+
+      <!-- Data Terbaru -->
+      <li class="nav-item dropdown d-none d-sm-inline-block">
+        <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">Data Terbaru</a>
+        <ul class="dropdown-menu">
+          <li>
+            <a class="dropdown-item" href="{{ url_for('validasi_pasien') }}">Data Pendaftaran Sementara</a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('tabel_pasien_permanen') }}">Data Pendaftaran Validasi</a>
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    <ul class="navbar-nav ms-auto">
+      <li class="nav-item">
+        <a href="{{ url_for('login') }}" class="nav-link fw-bold"> <i class="bi bi-box-arrow-right me-1"></i>Keluar </a>
+      </li>
+    </ul>
+  </div>
+</nav>

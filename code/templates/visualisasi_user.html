@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Peta Sebaran Pasien User</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+    <style>
+      #maps {
+        width: 100%;
+        height: calc(100vh - 150px);
+      }
+      .leflet-control-custom button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 18px;
+        cursor: pointer;
+      }
+      .leflet-control-custom button:hover {
+        background-color: #0056b3;
+      }
+
+      .custom-popup .leflet-popup-content-wrapper {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+      .custom-popup .leflet-popup-content {
+        margin: 0;
+        padding: 0;
+      }
+      .search-container {
+        position: static;
+        /* top: 10px;
+        right: 50px;
+        z-index: 9999; */
+        background: white;
+        padding: 5px;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      }
+      .search-container input {
+        border: 1px solid #ccc;
+        padding: 4px 8px;
+        width: 220px;
+        border-radius: 4px;
+      }
+      .custom-modal {
+        z-index: 1051;
+        display: none;
+        position: fixed;
+        top: 10%;
+        left: 5%;
+        width: 90%;
+        max-height: 80vh;
+        overflow: auto;
+        resize: both;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      }
+      .custom-modal .modal-header {
+        cursor: move;
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+      }
+      .custom-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: white;
+        float: right;
+        margin-left: auto;
+        cursor: pointer;
+      }
+      .custom-modal .modal-body {
+        padding: 15px;
+        max-height: 75vh;
+        overflow-y: auto;
+      }
+      .custom-modal .modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+        padding: 0;
+        flex-grow: 1;
+        color: #fff;
+      }
+      .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+
+  <body class="hold-transition layout-fixed sidebar-mini">
+    <div class="wrapper">
+      {% include 'navbar_pasien.html' %} {% include 'sidebar_pasien.html' %}
+
+      <div class="content-wrapper">
+        <section class="content-header">
+          <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap">
+            <h1 class="mb-0">Peta Sebaran Pasien</h1>
+
+            <div class="search-container d-flex align-items-center mt-2 mt-md-0">
+              <input type="text" id="searchInput" class="form-control" placeholder="Cari pasien/desa/kecamatan/puskesmas..." style="width: 250px" />
+              <button class="btn btn-primary ml-2" id="btnSearch">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="content">
+          <div class="container-fluid">
+            <div id="maps"></div>
+
+            <div id="hasilModal" class="custom-modal" aria-hidden="true" role="dialog" aria-labelledby="modalTitle">
+              <div class="modal-header">
+                <h5 class="modal-title">Hasil Pencarian Pasien</h5>
+                <button class="custom-close" id="closeModal">&times;</button>
+              </div>
+              <div class="modal-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-striped" id="resultTable" style="font-size: 14px; width: 100%">
+                    <thead>
+                      <tr>
+                        <th>Id Pasien</th>
+                        <th>Nama</th>
+                        <th>Umur</th>
+                        <th>Jenis Kelamin</th>
+                        <th>Kunjungan</th>
+                        <th>Frekuensi Nafas</th>
+                        <th>Tindak Lanjut</th>
+                        <th>Anti Biotika</th>
+                        <th>Faktor Risiko</th>
+                        <th>Desa/Kelurahan</th>
+                        <th>Kecamatan</th>
+                        <th>Puskesmas</th>
+                        <th>Cluter</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody id="resultTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="main-footer text-center">
+        <strong>Website GIS &copy; 2025</strong>
+      </footer>
+
+      <!-- JQuery -->
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+      <!-- JQuery UI -->
+      <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+      <!-- Bootstrap 4 -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+      <!-- AdminLte -->
+      <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+      <!-- DataTable -->
+      <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+      <!-- Leaflet JS -->
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+      <!-- SweetAlert2 -->
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+      <!-- marker -->
+      <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+      <script>
+        // set default koordinat maps dan zoom
+        const defLat = -6.9973271;
+        const defLng = 112.9253102;
+        const defZoom = 12;
+
+        const map = L.map("maps").setView([defLat, defLng], defZoom);
+
+        const basemap = {
+          OpenStreetMap: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"),
+        };
+        basemap.OpenStreetMap.addTo(map);
+
+        // marker cluster group
+        const markersCluster = L.markerClusterGroup();
+        map.addLayer(markersCluster);
+
+        // warna setiap cluster
+        const warnaClus = {};
+        function getColor(clusterId) {
+          clusterId = clusterId.toString();
+
+          if (!(clusterId in warnaClus)) {
+            const totalCluster = 20; // maksimal jumlah cluster
+            const index = Object.keys(warnaClus).length;
+            const hue = Math.floor((360 / totalCluster) * index);
+            warnaClus[clusterId] = `hsl(${hue}, 70%, 60%)`;
+          }
+          return warnaClus[clusterId];
+        }
+
+        //
+        let allPatients = [];
+        const markersMap = new Map();
+        const clusterLayers = {};
+        const overlayMaps = {};
+
+        async function loadPatients() {
+          try {
+            const response = await fetch("/visualisasi/pasien_user");
+            const geojson = await response.json();
+
+            markersCluster.clearLayers();
+            allPatients = [];
+            markersMap.clear();
+
+            const clusterIdSet = new Set();
+            geojson.features.forEach((f) => clusterIdSet.add(f.properties.cluster));
+            const clusterIds = [...clusterIdSet].sort((a, b) => a - b);
+
+            clusterIds.forEach((clusterId) => {
+              const layerGroup = L.layerGroup().addTo(map);
+              clusterLayers[clusterId] = layerGroup;
+              const color = getColor(clusterId);
+              overlayMaps[`<span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background:${color}; margin-right: 3px; margin-left: 3px;"></span> Cluster ${clusterId}`] = layerGroup;
+            });
+
+            geojson.features.forEach((feature) => {
+              const p = feature.properties;
+              const lat = feature.geometry.coordinates[1];
+              const lng = feature.geometry.coordinates[0];
+
+              allPatients.push(p);
+
+              const marker = L.circleMarker([lat, lng], {
+                radius: 6,
+                color: getColor(p.cluster),
+                fillOpacity: 0.8,
+              });
+
+              marker.bindPopup(`
+                <div class="card shadow-sm" style="width: 300px; font-family: 'Poppins', sans-serif; border-radius:10px;">
+                  <div class="card-body p-2">
+                    <h6 class="card-title text-primary mb-1">
+                      <i class="bi bi-person-circle"></i> Pasien ID:  ${p.id}
+                    <h6><br>
+                    <p class="mb-0"><strong>Nama Pasien:</strong> ${p.nama}</p>
+                    <p class="mb-0"><strong>Umur Pasien:</strong> ${p.umur} Bulan</p>
+                    <p class="mb-0"><strong>Frekuensi Nafas:</strong> ${p.frek_nafas}</p>
+                    <p class="mb-0"><i class="bi bi-geo-alt"></i> ${p.desa}, ${p.kecamatan}</p>
+                    <p class="mb-1">
+                      <span class="badge" style="background:${getColor(p.cluster)}; color:#fff">
+                        Cluster ${p.cluster}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              `);
+
+              markersCluster.addLayer(marker);
+              markersMap.set(p.id, marker);
+              clusterLayers[p.cluster].addLayer(marker);
+            });
+
+            L.control.layers(basemap, overlayMaps, { collapsed: false }).addTo(map);
+          } catch (error) {
+            console.error("Gagal load data pasien:", error);
+          }
+        }
+
+        // modal control
+        const hasilModal = document.getElementById("hasilModal");
+        const resultTableBody = document.getElementById("resultTableBody");
+        const closeModal = document.getElementById("closeModal");
+
+        closeModal.onclick = () => {
+          hasilModal.style.display = "none";
+          hasilModal.setAttribute("aria-hidden", "true");
+        };
+
+        $(function () {
+          $("#hasilModal").draggable({
+            handle: ".modal-header",
+          });
+        });
+
+        // Search function
+        function searchPatients(keyword) {
+          const q = keyword.trim().toLowerCase();
+          if (!q) {
+            alert("Masukkan kata kunci pencarian");
+            return;
+          }
+
+          const filtered = allPatients.filter((p) => {
+            return (p.nama && p.nama.toLowerCase().includes(q)) || (p.desa && p.desa.toLowerCase().includes(q)) || (p.kecamatan && p.kecamatan.toLowerCase().includes(q)) || (p.puskesmas && p.puskesmas.toLowerCase().includes(q));
+          });
+
+          resultTableBody.innerHTML = "";
+
+          if (filtered.length === 0) {
+            alert("Data pasien tidak ditemukan");
+            return;
+          }
+
+          filtered.forEach((p) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                       <td>${p.id}</td>
+                       <td>${p.nama}</td>
+                       <td>${p.umur}</td>
+                       <td>${p.jenis_kelamin}</td>
+                       <td>${p.kunjungan || ""}</td>
+                       <td>${p.frek_nafas || ""}</td>
+                       <td>${p.tindak_lanjut || ""}</td>
+                       <td>${p.anti_biotika || ""}</td>
+                       <td>${p.faktor_risiko || ""}</td>
+                       <td>${p.desa}</td>
+                       <td>${p.kecamatan}</td>
+                       <td>${p.puskesmas}</td>
+                       <td>${p.cluster}</td>
+                       <td><button class="btn btn-info btn-sm btnCariLokasi" data-id="${p.id}">Cari Lokasi</button></td>
+                   `;
+
+            tr.querySelector(".btnCariLokasi").onclick = () => {
+              const marker = markersMap.get(p.id);
+              if (marker) {
+                markersCluster.zoomToShowLayer(marker, () => {
+                  const latLng = marker.getLatLng();
+
+                  map.flyTo(latLng, 18, {
+                    animate: true,
+                    duration: 1.2,
+                  });
+
+                  setTimeout(() => {
+                    marker.openPopup();
+                  }, 1500);
+                });
+              }
+            };
+
+            resultTableBody.appendChild(tr);
+          });
+
+          hasilModal.style.display = "block";
+          hasilModal.setAttribute("aria-hidden", "false");
+        }
+
+        document.getElementById("btnSearch").onclick = () => {
+          const keyword = document.getElementById("searchInput").value;
+          searchPatients(keyword);
+        };
+
+        document.getElementById("searchInput").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            document.getElementById("btnSearch").click();
+          }
+        });
+
+        // Load data pasien saat awal halaman dibuka
+        loadPatients();
+      </script>
+    </div>
+  </body>
+</html>

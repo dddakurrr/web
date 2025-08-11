@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Peta DBSCAN -</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+    <style>
+      #maps {
+        width: 100%;
+        height: calc(100vh - 150px);
+      }
+      .leflet-control-custom button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 18px;
+        cursor: pointer;
+      }
+      .leflet-control-custom button:hover {
+        background-color: #0056b3;
+      }
+
+      .custom-popup .leflet-popup-content-wrapper {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+      .custom-popup .leflet-popup-content {
+        margin: 0;
+        padding: 0;
+      }
+      .search-container {
+        position: static;
+        /* top: 10px;
+        right: 50px;
+        z-index: 9999; */
+        background: white;
+        padding: 5px;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      }
+      .search-container input {
+        border: 1px solid #ccc;
+        padding: 4px 8px;
+        width: 220px;
+        border-radius: 4px;
+      }
+      .custom-modal {
+        z-index: 1051;
+        display: none;
+        position: fixed;
+        top: 10%;
+        left: 5%;
+        width: 90%;
+        max-height: 80vh;
+        overflow: auto;
+        resize: both;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      }
+      .custom-modal .modal-header {
+        cursor: move;
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+      }
+      .custom-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: white;
+        float: right;
+        margin-left: auto;
+        cursor: pointer;
+      }
+      .custom-modal .modal-body {
+        padding: 15px;
+        max-height: 75vh;
+        overflow-y: auto;
+      }
+      .custom-modal .modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+        padding: 0;
+        flex-grow: 1;
+        color: #fff;
+      }
+      .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+
+  <body class="hold-transition layout-fixed sidebar-mini">
+    <div class="wrapper">
+      {% include 'navbar_admin.html' %} {% include 'sidebar_admin.html' %}
+
+      <div class="content-wrapper">
+        <section class="content-header">
+          <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap">
+            <h1 class="mb-0">Peta DBSCAN Clustering</h1>
+
+            <div class="search-container d-flex align-items-center mt-2 mt-md-0">
+              <input type="text" id="searchInput" class="form-control" placeholder="Cari pasien/desa/kecamatan/puskesmas..." style="width: 250px" />
+              <button class="btn btn-primary ml-2" id="btnSearch">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="content">
+          <div class="container-fluid">
+            <div id="maps"></div>
+
+            <div id="hasilModal" class="custom-modal">
+              <div class="modal-header">
+                <h5 class="modal-title">Hasil Pencarian Pasien</h5>
+                <button class="custom-close" onclick="$('#hasilModal').hide()">&times;</button>
+              </div>
+              <div class="modal-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-striped" id="resultTable" style="font-size: 14px; width: 100%">
+                    <thead>
+                      <tr>
+                        <th>Id Pasien</th>
+                        <th>Nama</th>
+                        <th>Umur</th>
+                        <th>Jenis Kelamin</th>
+                        <th>Kunjungan</th>
+                        <th>Frekuensi Nafas</th>
+                        <th>Tindak Lanjut</th>
+                        <th>Anti Biotika</th>
+                        <th>Faktor Risiko</th>
+                        <th>Desa/Kelurahan</th>
+                        <th>Kecamatan</th>
+                        <th>Puskesmas</th>
+                        <th>Cluter</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="main-footer text-center">
+        <strong>Website GIS &copy; 2025</strong>
+      </footer>
+
+      <!-- JQuery -->
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+      <!-- JQuery UI -->
+      <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+      <!-- Bootstrap 4 -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+      <!-- AdminLte -->
+      <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+      <!-- DataTable -->
+      <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+      <!-- Leaflet JS -->
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+      <!-- SweetAlert2 -->
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+      <!-- marker -->
+      <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+      <script>
+        // ambil parameter dari url
+        const urlParams = new URLSearchParams(window.location.search);
+        const latParam = urlParams.get("lat");
+        const lngParam = urlParams.get("lng");
+        const zoomParam = urlParams.get("zoom");
+
+        // set default koordinat maps dan zoom
+        const defLat = -6.9973271;
+        const defLng = 112.9253102;
+        const defZoom = 12;
+
+        // jika ada parameter lat & lng
+        let initialLat = latParam ? parseFloat(latParam) : defLat;
+        let initialLng = lngParam ? parseFloat(lngParam) : defLng;
+        let initialZoom = zoomParam ? parseInt(zoomParam) : defZoom;
+
+        // validasi setelah edit lokasi baru
+        if (isNaN(initialLat) || isNaN(initialLng)) {
+          initialLat = defLat;
+          initialLng = defLng;
+        }
+        if (isNaN(initialZoom)) {
+          initialZoom = defZoom;
+        }
+
+        const map = L.map("maps").setView([initialLat, initialLng], initialZoom);
+
+        const basemap = {
+          OpenStreetMap: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"),
+        };
+        basemap.OpenStreetMap.addTo(map);
+
+        const warnaClus = {};
+        function getColor(clusterId) {
+          clusterId = clusterId.toString();
+
+          if (!(clusterId in warnaClus)) {
+            const totalCluster = 20; // maksimal jumlah cluster
+            const index = Object.keys(warnaClus).length;
+            const hue = Math.floor((360 / totalCluster) * index);
+            warnaClus[clusterId] = `hsl(${hue}, 70%, 60%)`;
+          }
+          return warnaClus[clusterId];
+        }
+
+        const layerGroup = { pasien: {} };
+
+        const layerControl = L.control.layers(basemap, null, { collapsed: false }).addTo(map);
+
+        let markerTambah = null;
+        let markerEdit = null;
+
+        let allPatients = [];
+        let dataTable = null;
+        let markersIndex = {};
+
+        loadLayerPasien();
+
+        function setSelectValUni(selectEl, value) {
+          if (!selectEl || !value) {
+            console.warn("Element atau nilai tidak tersedia: ", selectEl, value);
+            return;
+          }
+
+          const lowerVal = value.toLowerCase();
+          const found = [...selectEl.options].some((opt) => opt.value.toLowerCase() === lowerVal);
+
+          if (!found) {
+            console.log("Nilai baru belum ada di opsi, menambahkan: ", value);
+            selectEl.insertAdjacentHTML("beforeend", `<option value="${value}">${value}</option>`);
+          }
+          selectEl.value = value;
+          console.log("Setel Nilai", selectEl.nama, "ke", value);
+        }
+
+        function isiOtoWilayahUni(lat, lng, form = null) {
+          return fetch("/cari-wilayah", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lat: lat, lng: lng }),
+          })
+            .then((res) => res.json())
+            .then((dataWil) => {
+              console.log("Wilayah Baru: ", dataWil);
+
+              if (!dataWil.error && dataWil.id_desa !== null && dataWil.id_desa !== -1) {
+                if (form) {
+                  setSelectValUni(form["desa_kelurahan"], dataWil.nama_desa.toLowerCase());
+                  setSelectValUni(form["kecamatan"], dataWil.kecamatan.toLowerCase());
+                  setSelectValUni(form["puskesmas"], dataWil.puskesmas.toLowerCase());
+                }
+
+                return {
+                  nama_desa: dataWil.nama_desa,
+                  kecamatan: dataWil.kecamatan,
+                  puskesmas: dataWil.puskesmas,
+                  id_desa: dataWil.id_desa,
+                };
+              } else {
+                throw new Error("Wilayah tidak ditemukan");
+              }
+            });
+        }
+
+        function loadLayerPasien(fokusKoordinat = null, highlightId = null) {
+          Object.values(layerGroup.pasien).forEach((layer) => {
+            map.removeLayer(layer);
+            layerControl.removeLayer(layer);
+          });
+          layerGroup.pasien = {};
+          markersIndex = {};
+
+          if (layerControl && layerControl._layers) {
+            Object.keys(layerControl._layers).forEach((key) => {
+              const layerObj = layerControl._layers[key];
+              if (layerObj && layerObj.name && layerObj.name.startsWith("pasien - cluster")) {
+                layerControl.removeLayer(layerObj.layer);
+              }
+            });
+          }
+
+          // layer pasien per cluster
+          fetch("/visualisasi/pasien")
+            .then((res) => res.json())
+            .then((geojson) => {
+              const setCluster = new Set();
+              geojson.features.forEach((f) => {
+                if (f.properties.cluster !== null && f.properties.cluster !== undefined) {
+                  setCluster.add(f.properties.cluster);
+                }
+              });
+
+              const sortedClusters = Array.from(setCluster).sort((a, b) => a - b);
+
+              sortedClusters.forEach((c) => {
+                const layer = L.markerClusterGroup();
+                layerGroup.pasien[c] = layer;
+
+                const color = getColor(c);
+                const label = `
+                  <span style="display: inline-flex; align-items: center; gap: 6px; margin-left: 3px;">
+                    <span style="width: 12px; height: 12px; border-radius: 50%; background: ${color}; display: inline-block;"></span>
+                    <span>Cluster ${c}</span>
+                  </span>
+                `;
+
+                layerControl.addOverlay(layer, label);
+              });
+
+              // untuk tambah marker
+              const markers = [];
+              let highlightMarker = null;
+              allPatients = [];
+
+              geojson.features.forEach((f) => {
+                const p = f.properties;
+                allPatients.push({
+                  id: p.id,
+                  nama: p.nama,
+                  umur: p.umur,
+                  jenis_kelamin: p.jenis_kelamin,
+                  kunjungan: p.kunjungan,
+                  frek_nafas: p.frek_nafas,
+                  tindak_lanjut: p.tindak_lanjut,
+                  anti_biotika: p.anti_biotika,
+                  faktor_risiko: p.faktor_risiko,
+                  desa: p.desa,
+                  kecamatan: p.kecamatan,
+                  puskesmas: p.puskesmas,
+                  cluster: p.cluster,
+                  lat: f.geometry.coordinates[1],
+                  lng: f.geometry.coordinates[0],
+                });
+                document.getElementById("btnSearch").disabled = false;
+
+                const cluster = f.properties.cluster;
+
+                const marker = L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {
+                  radius: 6,
+                  color: getColor(cluster),
+                  fillOpacity: 0.8,
+                });
+
+                if (highlightId && parseInt(f.properties.id) == parseInt(highlightId)) {
+                  highlightMarker = marker;
+                }
+
+                // membuat popup pasien
+                const popupContent = `
+                  <div class="card shadow-sm" style="width: 300px; font-family: 'Poppins', sans-serif; border-radius:10px;">
+                    <div class="card-body p-2">
+                      <h6 class="card-title text-primary mb-1">
+                        <i class="bi bi-person-circle"></i> Pasien ID:  ${f.properties.id}
+                      <h6><br>
+                      <p class="mb-0"><strong>Nama Pasien:</strong> ${f.properties.nama}</p>
+                      <p class="mb-0"><strong>Umur Pasien:</strong> ${f.properties.umur} Bulan</p>
+                      <p class="mb-0"><strong>Frekuensi Nafas:</strong> ${f.properties.frek_nafas}</p>
+                      <p class="mb-0"><i class="bi bi-geo-alt"></i> ${f.properties.desa}, ${f.properties.kecamatan}</p>
+                      <p class="mb-1">
+                        <span class="badge" style="background:${getColor(f.properties.cluster)}; color:#fff">
+                          Cluster ${f.properties.cluster}
+                        </span>
+                      </p>
+                      <div class="d-flex justify-content-between mt-2">
+                        <button class="btn btn-sm btn-warning btnEditPasien" data-id="${f.properties.id}">
+                          <i class="bi bi-pencil-square"></i> Edit Data
+                        </button>
+                        <button class="btn btn-sm btn-danger btnHapusPasien" data-id="${f.properties.id}">
+                          <i class="bi bi-trash"></i> Hapus Data
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                `;
+
+                marker.bindPopup(popupContent, { maxWidth: 340, className: "custom-popup" });
+
+                layerGroup.pasien[cluster].addLayer(marker);
+                markers.push(marker);
+                markersIndex[p.id] = marker;
+              });
+
+              Object.values(layerGroup.pasien).forEach((layer) => map.addLayer(layer));
+
+              if (highlightMarker) {
+                highlightMarker.openPopup();
+                map.flyTo(highlightMarker.getLatLng(), 18, { animate: true, duration: 1.5 });
+              } else if (fokusKoordinat) {
+                map.flyTo(fokusKoordinat, 18, { animate: true, duration: 1.5 });
+              } else if (markers.length > 0) {
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.2));
+              }
+            });
+        }
+
+        // tambah data pasien
+        let addMode = false;
+
+        const TambahBtn = L.control({ position: "topleft" });
+        TambahBtn.onAdd = function () {
+          const divBtn = L.DomUtil.create("div", "leaflet-bar leaflet-control leaflet-control-custom");
+          divBtn.innerHTML = '<button title="Tambah Pasien" style="padding:4px 8px;"> + </button>';
+          divBtn.style.backgroundColor = "white";
+          divBtn.style.cursor = "pointer";
+          L.DomEvent.disableClickPropagation(divBtn);
+
+          divBtn.onclick = () => {
+            if (addMode) {
+              addMode = false;
+              map.getContainer().style.cursor = "";
+              if (markerTambah) {
+                map.removeLayer(markerTambah);
+                markerTambah = null;
+              }
+              Swal.fire("Mode Tambah dinonaktifkan");
+            } else {
+              Swal.fire("Klik pada peta untuk menentukan lokasi pasien baru");
+              addMode = true;
+              map.getContainer().style.cursor = "crosshair";
+            }
+          };
+
+          return divBtn;
+        };
+        map.addControl(TambahBtn);
+
+        map.on("click", (e) => {
+          if (!addMode) return;
+
+          const latlng = e.latlng;
+
+          if (markerTambah) {
+            map.removeLayer(markerTambah);
+          }
+
+          markerTambah = L.marker(latlng, { draggable: true }).addTo(map);
+
+          fetch("/ambil-isi-form")
+            .then((res) => res.json())
+            .then((opsi) => {
+              let formTambah = `
+                  <style>
+                    .popup-tambah-form { width: 500px; font-family: 'Poppins', sans-serif;}
+                    .popup-tambah-form .form-grid {
+                      display: grid;
+                      grid-template-columns: 1fr 1fr;
+                      gap: 10px;
+                    }
+                    .popup-tambah-form label {
+                      font-size: 13px;
+                      font-weight: 500;
+                    }
+                    .popup-tambah-form .action {
+                      grid-column: span 2;
+                      text-align: center;
+                      margin-top: 10px;
+                    }
+                    .popup-tambah-form button {
+                      padding: 6px 12px;
+                      border: none;
+                      border-radius: 5px;
+                      cursor: pointer;
+                      margin: 0 5px;
+                    }
+                    .popup-tambah-form .btn-save { background: #28a745; color: #fff; }
+                    .popup-tambah-form .btn-cancel { background: #dc3545; color: #fff; }
+
+                    .leaflet-popup-content {
+                      width: 500px !important;
+                    }
+                    .form-grid div {
+                      display: flex;
+                      flex-direction: column;
+                    }
+                  </style>
+                  <div class="popup-tambah-form">
+                    <form id="formTambahPasien">
+                      <div class="form-grid">
+                        <div>
+                          <label>Nama : </label>
+                          <input name="nama" required>
+                        </div>
+
+                        <div>
+                          <label>Tanggal : </label>
+                          <input type="date" name="tgl" required>
+                        </div>
+
+                        <div>
+                          <label>Desa/Kelurahan : </label>
+                          <select name="desa_kelurahan" required>${opsi.desa.map((d) => `<option value="${d}">${d}</option>`).join("")}</select>
+                        </div>
+
+                        <div>
+                          <label>Kecamatan : </label>
+                          <select name="kecamatan" required>${opsi.kecamatan.map((k1) => `<option value="${k1}">${k1}</option>`).join("")}</select>
+                        </div>
+
+                        <div>
+                          <label>Kunjungan : </label>
+                          <select name="kunjungan" required>${opsi.kunjungan.map((k2) => `<option value="${k2}">${k2}</option>`).join("")}</select>
+                        </div>
+
+                        <div>
+                          <label>Jenis Kelamin : </label>
+                          <select name="jenis_kelamin" required>${opsi.jenis_kelamin.map((jk) => `<option value="${jk}">${jk}</option>`).join("")}</select>
+                        </div>
+
+                        <div>
+                          <label>Umur (bulan) : </label>
+                          <input type="number" name="umur" required min="0">
+                        </div>
+
+                        <div>
+                          <label>Frekuensi Nafas : </label>
+                          <input type="number" name="frek_nafas" required min="0">
+                        </div>
+
+                        <div>
+                          <label>Klasifikasi : </label>
+                          <select name="klasifikasi" required>${opsi.klasifikasi.map((kl) => `<option value="${kl}">${kl}</option>`).join("")}</select>
+                        </div>
+
+                        <div>
+                          <label>Tindak Lanjut : </label>
+                          <select name="tindak_lanjut" required>${opsi.tindak_lanjut.map((tl) => `<option value="${tl}">${tl}</option>`).join("")}</select>
+                        </div>
+
+                        <div>
+                          <label>Anti Biotika : </label>
+                          <select name="anti_biotika" required>${opsi.anti_biotika.map((ab) => `<option value="${ab}">${ab}</option>`).join("")}</select>
+                        </div>
+
+                        <div>
+                          <label>Kondisi Saat Kunjungan Ulang : </label>
+                          <select name="kondisi_saat_kunjungan_ulang" required>${opsi.kondisi.map((ks) => `<option value="${ks}">${ks}</option>`).join("")}</select>
+                        </div>
+
+                        <div>
+                          <label>Faktor Risiko : </label>
+                          <select name="faktor_risiko" required>${opsi.faktor_risiko.map((fr) => `<option value="${fr}">${fr}</option>`).join("")}</select>
+                        </div>
+
+                        <div>
+                          <label>Puskesmas : </label>
+                          <select name="puskesmas" required>${opsi.puskesmas.map((ps) => `<option value="${ps}">${ps}</option>`).join("")}</select>
+                        </div>
+
+                        <div>
+                          <label>Keterangan (Opsional) : </label>
+                          <input name="keterangan">
+                        </div>
+                      </div>
+                      <div class="action">
+                        <button type="submit" class="btn-save">Tambah Pasien</button>
+                        <button type="button" id="btnBatalTambah" class="btn-cancel">Batal</button>
+                      </div>
+                    </form>
+                  </div>
+                `;
+
+              markerTambah.bindPopup(formTambah).openPopup();
+              setTimeout(() => {
+                const formEl = document.getElementById("formTambahPasien");
+
+                if (!formEl) return;
+
+                formEl.onsubmit = (e) => {
+                  e.preventDefault();
+
+                  const formData = new FormData(e.target);
+                  const data = Object.fromEntries(formData.entries());
+                  data.latitude = latlng.lat;
+                  data.longitude = latlng.lng;
+
+                  fetch("/tambah-data-pasien", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                  })
+                    .then((res) => res.json())
+                    .then((res) => {
+                      if (res.success) {
+                        Swal.fire("Berhasil", "Data pasien berhasil ditambahkan", "success");
+                        map.removeLayer(markerTambah);
+                        markerTambah = null;
+                        addMode = false;
+                        map.getContainer().style.cursor = "";
+                        loadLayerPasien([data.latitude, data.longitude], res.id);
+                      } else {
+                        Swal.fire("Gagal", res.message, "error");
+                      }
+                    });
+                };
+
+                document.getElementById("btnBatalTambah").onclick = () => {
+                  map.removeLayer(markerTambah);
+                  markerTambah = null;
+                  addMode = false;
+                  map.getContainer().style.cursor = "";
+                };
+              }, 200);
+            });
+        });
+
+        map.on("popupopen", function (e) {
+          console.log("popup dibuka");
+          const popup = e.popup._contentNode;
+
+          // edit button
+          const btnEdit = popup.querySelector(".btnEditPasien");
+          if (!btnEdit) return;
+
+          btnEdit.onclick = (evt) => {
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+
+            const id = btnEdit.dataset.id;
+
+            fetch(`/ambil-data-pasien/${id}`)
+              .then((res) => res.json())
+              .then((dataup) => {
+                if (!dataup.success) return alert("data tidak ditemukan");
+                const pasien = dataup.pasien;
+
+                if (markerTambah) map.removeLayer(markerTambah);
+                if (markerEdit) map.removeLayer(markerEdit);
+
+                const showEdit = () => {
+                  markerEdit = L.marker([pasien.latitude, pasien.longitude], { draggable: false }).addTo(map);
+                  markerEdit
+                    .bindPopup(
+                      `
+                      <div style="width: 300px; font-family: 'Poppins', sans-serif;">
+                        <h6 style="text-align: center; margin-bottom: 10px;">Edit Data Pasien</h6>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                          <button id="btnEditKoor" style="background: #007bff; color: #fff; border: none; padding: 8px; border-radius: 5px; cursor: pointer;">
+                            <i class="bi bi-geo-alt"></i> Edit Lokasi
+                          </button>
+                          <button id="btnEditForm" style="background: #ffc107; color: #000; border: none; padding: 8px; border-radius: 5px; cursor: pointer;">
+                            <i class="bi bi-pencil-square"></i> Edit Data Pasien
+                          </button>
+                          <button id="btnEditBatal" style="background: #dc3534; color: #fff; border: none; padding: 8px; border-radius: 5px; cursor: pointer;">
+                            <i class="bi bi-x-circle"></i> Batal
+                          </button>
+                        </div>
+                      </div>
+                    `
+                    )
+                    .openPopup();
+
+                  setTimeout(() => {
+                    document.getElementById("btnEditKoor").onclick = () => handleEditKoordinat(id, pasien);
+                    document.getElementById("btnEditForm").onclick = () => handleEditForm(id);
+                    document.getElementById("btnEditBatal").onclick = () => {
+                      map.removeLayer(markerEdit);
+                      markerEdit = null;
+                    };
+                  }, 100);
+                };
+
+                showEdit();
+              });
+          };
+
+          const btnHapus = popup.querySelector(".btnHapusPasien");
+          if (btnHapus) {
+            btnHapus.onclick = (evt) => {
+              evt.preventDefault();
+              evt.stopImmediatePropagation();
+
+              const id = btnHapus.dataset.id;
+
+              Swal.fire({
+                title: "Hapus Data?",
+                text: "Yakin ingin menghapus data pasien ini?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Ya, Hapus",
+                cancelButtonText: "Batal",
+              }).then((result) => {
+                if (result.isConfirmed) {
+                  Swal.fire({
+                    title: "Menghapus..",
+                    text: "Sedang menghapus data pasien",
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                      Swal.showLoading();
+                    },
+                  });
+
+                  fetch(`/hapus-data-pasien/${id}`, {
+                    method: "DELETE",
+                  })
+                    .then((res) => res.json())
+                    .then((res) => {
+                      if (res.success) {
+                        Swal.fire({
+                          title: "Terhapus!",
+                          text: "Data pasien berhasil dihapus.",
+                          icon: "success",
+                          confirmButtonText: "OKE",
+                        }).then(() => {
+                          map.closePopup();
+                          loadLayerPasien();
+                        });
+                      } else {
+                        Swal.fire("Gagal", res.message, "error");
+                      }
+                    })
+                    .catch((err) => {
+                      Swal.fire("Error", "Gagal menghapus: " + err.message, "error");
+                    });
+                }
+              });
+            };
+          }
+        });
+
+        function handleEditKoordinat(id, pasien) {
+          if (markerEdit) map.removeLayer(markerEdit);
+          markerEdit = L.marker([pasien.latitude, pasien.longitude], { draggable: true }).addTo(map);
+          markerEdit
+            .bindPopup(
+              `
+              <div style="width: 250px; font-family:'Poppins', sans-serif;">
+                <h6 style="text-align: center; margin-bottom: 8px;">Silakan Pindahkan Marker Ke Lokasi Baru<h6>
+                <div style="display: flex; flex-direction: colomn; gap: 8px;">
+                  <button id="btnSimpanKoor" style="background: #28a745; color: #fff; border: none; padding: 8px; border-radius: 5px; cursor: pointer;">
+                    <i class="bi bi-check-circle"></i> Simpan Lokasi
+                  </button>
+                  <button id="btnBatalKoor" style="background: #dc3545; color: #fff; border: none; padding: 8px; border-radius: 5px; cursor: pointer;">
+                    <i class="bi bi-x-circle"></i> Batal
+                  </button>
+                </div>
+              </div>
+            `
+            )
+            .openPopup();
+
+          markerEdit.on("popupopen", (e) => {
+            console.log("popup marker Edit terbuka");
+
+            const popupEd = e.popup._contentNode;
+            console.log("Isi Popup DOM: ", popupEd.innerHTML);
+
+            const btnSimpanKo = popupEd.querySelector("#btnSimpanKoor");
+            const btnBatalKo = popupEd.querySelector("#btnBatalKoor");
+
+            if (!btnSimpanKo || !btnBatalKo) {
+              alert("Tombol popup tidak ditemukan");
+              return;
+            }
+
+            console.log("Tombol ditemukan, siap dipakai");
+
+            btnSimpanKo.onclick = () => {
+              const posisiBaru = markerEdit.getLatLng();
+              isiOtoWilayahUni(posisiBaru.lat, posisiBaru.lng)
+                .then((wilayah) => {
+                  if (!wilayah || !wilayah.id_desa || wilayah.id_desa === -1) {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Wilayah Tidak Ditemukan",
+                      text: "Wilayah tidak tersedia di Database",
+                      confirmButtonColor: "#d33",
+                    });
+                    return;
+                  }
+
+                  fetch(`/update-koordinat/${id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      latitude: posisiBaru.lat,
+                      longitude: posisiBaru.lng,
+                      desa_kelurahan: wilayah.nama_desa,
+                      kecamatan: wilayah.kecamatan,
+                      puskesmas: wilayah.puskesmas,
+                      id_desa: wilayah.id_desa,
+                    }),
+                  })
+                    .then((res) => res.json())
+                    .then((res) => {
+                      if (!res.success) {
+                        Swal.fire({
+                          icon: "error",
+                          title: "Gagal",
+                          text: "Lokasi gagal diperbarui",
+                          confirmButtonColor: "#d33",
+                        });
+                        return;
+                      }
+
+                      Swal.fire({
+                        icon: "success",
+                        title: "Berhasil",
+                        text: "Lokasi berhasil diperbarui",
+                        confirmButtonColor: "#3085d6",
+                      }).then(() => {
+                        if (markerEdit) {
+                          map.removeLayer(markerEdit);
+                          markerEdit = null;
+                        }
+                        loadLayerPasien([posisiBaru.lat, posisiBaru.lng], id);
+                      });
+                    })
+                    .catch((err) => {
+                      Swal.fire({
+                        icon: "error",
+                        title: "Error!",
+                        text: "Terjadi Kesalahan: " + err.message,
+                        confirmButtonColor: "#d33",
+                      });
+                    });
+                })
+                .catch((err) => {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Error!",
+                    text: "Wilayah gagal ditemukan: " + err.message,
+                    confirmButtonColor: "#d33",
+                  });
+                });
+            };
+
+            btnBatalKo.onclick = () => {
+              map.removeLayer(markerEdit);
+              markerEdit = null;
+            };
+          });
+        }
+
+        function handleEditForm(id) {
+          Promise.all([fetch("/ambil-isi-form").then((r) => r.json()), fetch(`/ambil-data-pasien/${id}`).then((r) => r.json())]).then(([opsi, p1res]) => {
+            if (!p1res.success) return alert("Data tidak ditemukan");
+
+            const p1 = p1res.pasien;
+            const tanggal = new Date(p1.tgl).toISOString().split("T")[0];
+
+            const formEdit = `
+              <style>
+                .popup-edit-form { width: 500px; font-family: 'Poppins', sans-serif;}
+                .popup-edit-form .form-grid {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 10px;
+                }
+                .popup-edit-form label {
+                  font-size: 13px;
+                  font-weight: 500;
+                }
+                .popup-edit-form .actions {
+                  grid-column: span 2;
+                  text-align: center;
+                  margin-top: 10px;
+                }
+                .popup-edit-form button {
+                  padding: 6px 12px;
+                  border: none;
+                  border-radius: 5px;
+                  cursor: pointer;
+                  margin: 0 5px;
+                }
+                .popup-edit-form .btn-save { background: #28a745; color: #fff; }
+                .popup-edit-form .btn-cancel { background: #dc3545; color: #fff; }
+
+                .leaflet-popup-content {
+                  width: 500px !important;
+                }
+                .form-grid div {
+                  display: flex;
+                  flex-direction: column;
+                }
+              </style>
+
+              <div class="popup-edit-form">
+
+                <form id="formEditPasien">
+                  <div class="form-grid">
+                    <div>
+                      <label>Nama : </label>
+                      <input name="nama" value="${p1.nama}" required>
+                    </div>
+
+                    <div>
+                      <label>Tanggal : </label>
+                      <input type="date" name="tgl" value="${tanggal}" required>
+                    </div>
+
+                    <div>
+                      <label>Desa/Kelurahan : </label>
+                      <select name="desa_kelurahan" required>${opsi.desa.map((d) => `<option value="${d}" ${d === p1.desa_kelurahan ? "selected" : ""}>${d}</option>`).join("")}</select>
+                    </div>
+
+                    <div>
+                      <label>Kecamatan : </label>
+                      <select name="kecamatan" required>${opsi.kecamatan.map((k1) => `<option value="${k1}" ${k1 === p1.kecamatan ? "selected" : ""}>${k1}</option>`).join("")}</select>
+                    </div>
+
+                    <div>
+                      <label>Kunjungan : </label>
+                      <select name="kunjungan" value="${p1.kunjungan}" required>${opsi.kunjungan.map((k2) => `<option value="${k2}" ${k2 === p1.kunjungan ? "selected" : ""}>${k2}</option>`).join("")}</select>
+                    </div>
+
+                    <div>
+                      <label>Jenis Kelamin : </label>
+                      <select name="jenis_kelamin" value="${p1.jenis_kelamin}" required>${opsi.jenis_kelamin.map((jk) => `<option value="${jk}" ${jk === p1.jenis_kelamin ? "selected" : ""}>${jk}</option>`).join("")}</select>
+                    </div>
+
+                    <div>
+                      <label>Umur (bulan) : </label>
+                      <input type="number" name="umur" value="${p1.umur}" required min="0">
+                    </div>
+
+                    <div>
+                      <label>Frekuensi Nafas : </label>
+                      <input type="number" name="frek_nafas" value="${p1.frek_nafas}" required min="0">
+                    </div>
+
+                    <div>
+                      <label>Klasifikasi : </label>
+                      <select name="klasifikasi" value="${p1.klasifikasi}" required>${opsi.klasifikasi.map((kl) => `<option value="${kl}" ${kl === p1.klasifikasi ? "selected" : ""}>${kl}</option>`).join("")}</select>
+                    </div>
+
+                    <div>
+                      <label>Tindak Lanjut : </label>
+                      <select name="tindak_lanjut" value="${p1.tindak_lanjut}" required>${opsi.tindak_lanjut.map((tl) => `<option value="${tl}" ${tl === p1.tindak_lanjut ? "selected" : ""}>${tl}</option>`).join("")}</select>
+                    </div>
+
+                    <div>
+                      <label>Anti Biotika : </label>
+                      <select name="anti_biotika" value="${p1.anti_biotika}" required>${opsi.anti_biotika.map((ab) => `<option value="${ab}" ${ab === p1.anti_biotika ? "selected" : ""}>${ab}</option>`).join("")}</select>
+                    </div>
+
+                    <div>
+                      <label>Kondisi Saat Kunjungan Ulang : </label>
+                      <select name="kondisi_saat_kunjungan_ulang" value="${p1.kondisi_saat_kunjungan_ulang}" required> ${opsi.kondisi
+              .map((ks) => `<option value="${ks}" ${ks === p1.kondisi_saat_kunjungan_ulang ? "selected" : ""}>${ks}</option>`)
+              .join("")}</select>
+                    </div>
+
+                    <div>
+                      <label>Faktor Risiko : </label>
+                      <select name="faktor_risiko" value="${p1.faktor_risiko}" required>${opsi.faktor_risiko.map((fr) => `<option value="${fr}" ${fr === p1.faktor_risiko ? "selected" : ""}>${fr}</option>`).join("")}</select>
+                    </div>
+
+                    <div>
+                      <label>Puskesmas : </label>
+                      <select name="puskesmas" required>${opsi.puskesmas.map((ps) => `<option value="${ps}" ${ps === p1.puskesmas ? "selected" : ""}>${ps}</option>`).join("")}</select>
+                    </div>
+
+                    <div>
+                      <label>Keterangan (Opsional) : </label>
+                      <input name="keterangan" value="${p1.keterangan || ""}">
+                    </div>
+                  </div>
+
+                  <div class="actions">
+                    <button type="submit" class="btn-save">Simpan</button>
+                    <button type="button" id="btnBatalEdit" class="btn-cancel">Batal</button>
+                  </div>
+                </form>
+              </div>
+            `;
+
+            if (markerEdit) map.removeLayer(markerEdit);
+            markerEdit = L.marker([p1.latitude, p1.longitude], { draggable: false }).addTo(map);
+            markerEdit.bindPopup(formEdit).openPopup();
+
+            setTimeout(() => {
+              document.getElementById("formEditPasien").onsubmit = (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                data.id_pasien = id;
+
+                fetch(`/edit-data-pasien/${id}`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(data),
+                })
+                  .then((res) => res.json())
+                  .then((res) => {
+                    if (res.success) {
+                      Swal.fire({
+                        icon: "success",
+                        title: "Berhasil",
+                        text: "Data pasien berhasil diperbarui",
+                      }).then(() => {
+                        if (markerEdit) {
+                          map.removeLayer(markerEdit);
+                          markerEdit = null;
+                        }
+                        loadLayerPasien([p1.latitude, p1.longitude], id);
+                      });
+                    } else {
+                      alert("Gagal update data: " + res.message);
+                    }
+                  });
+              };
+
+              document.getElementById("btnBatalEdit").onclick = () => {
+                map.removeLayer(markerEdit);
+                markerEdit = null;
+              };
+            }, 100);
+          });
+        }
+
+        TambahBtn.addTo(map);
+
+        $(document).ready(function () {
+          let dataTable = null;
+
+          $("#hasilModal")
+            .draggable({
+              handle: ".modal-header",
+              containment: "window",
+            })
+            .resizable({
+              minWidth: 350,
+              minHeight: 200,
+            });
+
+          // Tombol close
+          $("#closePanel").on("click", function () {
+            $("#hasilModal").hide();
+          }); /* 
+
+          $(".modal-dialog").draggable({
+            handle: ".modal-header",
+            containment: "window",
+          });
+
+          $("#hasilModal").on("shown.bs.modal", function () {
+            $(".modal-backdrop").off("click");
+          }); */
+
+          $(document).on("click", ".btnEditPasien, .btnHapusPasien", function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+          });
+
+          $("#btnSearch").on("click", doSearch);
+          $("#searchInput").on("keypress", function (e) {
+            if (e.key === "Enter") {
+              doSearch();
+            }
+          });
+
+          /* if (dataTable) {
+            dataTable.columns.adjust();
+          } */
+
+          function doSearch() {
+            const keyword = $("#searchInput").val().toLowerCase().trim();
+
+            if (allPatients.length === 0) {
+              alert("Data pasien belum siap. tunggu beberapa detik...");
+              return;
+            }
+
+            let filtered =
+              keyword === ""
+                ? allPatients
+                : allPatients.filter(
+                    (p) =>
+                      p.id?.toString().includes(keyword) ||
+                      (p.nama?.toLowerCase() || "").includes(keyword) ||
+                      p.umur?.toString().includes(keyword) ||
+                      (p.jenis_kelamin?.toLowerCase() || "").includes(keyword) ||
+                      (p.kunjungan?.toLowerCase() || "").includes(keyword) ||
+                      (p.desa?.toLowerCase() || "").includes(keyword) ||
+                      (p.kecamatan?.toLowerCase() || "").includes(keyword) ||
+                      (p.puskesmas?.toLowerCase() || "").includes(keyword) ||
+                      p.cluster?.toString().includes(keyword)
+                  );
+
+            if (!dataTable) {
+              $("#resultTable").show();
+              dataTable = $("#resultTable").DataTable({
+                paging: true,
+                pageLength: 15,
+                lengthChange: false,
+                searching: false,
+                info: false,
+                columns: [
+                  { data: "id" },
+                  { data: "nama" },
+                  { data: "umur" },
+                  { data: "jenis_kelamin" },
+                  { data: "kunjungan" },
+                  { data: "frek_nafas" },
+                  { data: "tindak_lanjut" },
+                  { data: "anti_biotika" },
+                  { data: "faktor_risiko" },
+                  { data: "desa" },
+                  { data: "kecamatan" },
+                  { data: "puskesmas" },
+                  { data: "cluster" },
+                  {
+                    data: null,
+                    render: function (data) {
+                      return `<button class="btn btn-primary btn-sm lihat-btn" data-id="${data.id}">Lihat Lokasi</button>`;
+                    },
+                  },
+                ],
+                language: {
+                  paginate: {
+                    previous: '<i class="bi bi-arrow-left-circle"></i>',
+                    next: '<i class="bi bi-arrow-right-circle"></i>',
+                  },
+                },
+              });
+
+              $("#resultTable").on("click", ".lihat-btn", function () {
+                /* evt.preventDefault();
+                evt.stopImmediatePropagation(); */
+
+                const id = $(this).data("id");
+                const marker = markersIndex[id];
+                if (marker) {
+                  const latLng = marker.getLatLng(); // ambil koordinat
+
+                  // zoom peta animasi
+                  map.flyTo(latLng, 18, {
+                    animate: true,
+                    duration: 1.2,
+                  });
+
+                  // popup muncul sekitar 1.2 detik
+                  setTimeout(() => {
+                    marker.openPopup();
+                  }, 1300);
+                }
+              });
+            }
+
+            dataTable.clear().rows.add(filtered).draw();
+
+            $("#hasilModal").show();
+          }
+        });
+      </script>
+    </div>
+  </body>
+</html>

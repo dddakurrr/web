@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home Pasien</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  </head>
+  <body class="hold-transition layout-fixed sidebar-mini">
+    <div class="wrapper">
+      {% include 'navbar_pasien.html' %} {% include 'sidebar_pasien.html' %}
+      <div class="content-wrapper">
+        <section class="content-header">
+          <div class="container-fluid">
+            <h1 class="m-0">Halo, Selamat Datang...</h1>
+          </div>
+        </section>
+
+        <section class="content">
+          <div class="container-fluid">
+            <div class="card">
+              <div class="card-body">
+                Website ini merupakan salah satu sarana informasi kesehatan terutama penyakit Pneumonia pada Balita di Kabupaten Bangkalan, Jawa Timur. <br />
+                Sistem Informasi Geografis (SIG) penyebaran penyakit Pneumonia pada Balita, selain itu pasien bisa melihat penyebaran pasien Pneumonia di Kabupaten Bangkalan dan dapat mendaftar terlebih dahulu untuk melakukan pengecekan
+                kesehatan untuk Balita.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="main-footer text-center">
+        <strong>Website GIS &copy; 2025</strong>
+      </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  </body>
+</html>

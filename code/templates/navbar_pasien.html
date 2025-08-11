@@ -1,0 +1,28 @@
+<nav class="main-header navbar navbar-expand navbar-white navbar-light">
+  <div class="container-fluid">
+    <ul class="navbar-nav">
+      <!-- untuk membuka sidebar-->
+      <li class="nav-item">
+        <a href="#" class="nav-link" data-widget="pushmenu" role="button">
+          <i class="bi bi-list fs-4"></i>
+        </a>
+      </li>
+
+      <!--Dashboard-->
+      <li class="nav-item d-none d-sm-inline-block">
+        <a class="nav-link" href="{{ url_for('user_home') }}">Dashboard</a>
+      </li>
+
+      <!-- Visualisasi -->
+      <li class="nav-item d-none d-sm-inline-block">
+        <a class="nav-link" href="{{ url_for('visualisasi_peta_user') }}">Peta Sebaran Pasien</a>
+      </li>
+    </ul>
+
+    <ul class="navbar-nav ms-auto">
+      <li class="nav-item">
+        <a href="{{ url_for('login') }}" class="nav-link fw-bold"> <i class="bi bi-box-arrow-right me-1"></i>Keluar </a>
+      </li>
+    </ul>
+  </div>
+</nav>

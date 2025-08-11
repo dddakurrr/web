@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Homepage</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+  </head>
+
+  <body class="hold-transition layout-fixed sidebar-mini">
+    <script>
+      const role = "{{ role }}";
+    </script>
+    <div class="wrapper">
+      {% include 'navbar_admin.html' %} {% include 'sidebar_admin.html' %}
+      <div class="content-wrapper">
+        <section class="content-header">
+          <div class="container-fluid">
+            <h1 class="m-0">Halo, Selamat Datang...</h1>
+          </div>
+        </section>
+
+        <section class="content">
+          <div class="container-fluid">
+            <div class="card">
+              <div class="card-body">
+                Website ini merupakan salah satu sarana informasi kesehatan terutama penyakit Pneumonia pada Balita di Kabupaten Bangkalan, Jawa Timur. <br />
+                Sistem Informasi Geografis (SIG) penyebaran penyakit Pneumonia pada Balita, selain itu pasien bisa melihat penyebaran pasien Pneumonia di Kabupaten Bangkalan dan dapat mendaftar terlebih dahulu untuk melakukan pengecekan
+                kesehatan untuk Balita.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <footer class="main-footer text-center">
+        <strong>Website GIS &copy; 2025</strong>
+      </footer>
+
+      <!-- JQuery -->
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+      <!-- JQuery UI -->
+      <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+      <!-- Bootstrap 4 -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+      <!-- AdminLte -->
+      <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+      <!-- DataTable -->
+      <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+      <!-- Leaflet JS -->
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+      <!-- SweetAlert2 -->
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+      <!-- marker -->
+      <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    </div>
+  </body>
+</html>

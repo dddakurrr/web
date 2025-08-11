@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pendaftaran Pasien</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  </head>
+  <body class="hold-transition sidebar-mini layout-fixed">
+    <div class="wrapper">
+      {% include 'navbar_pasien.html' %} {% include 'sidebar_pasien.html' %}
+
+      <div class="content-wrapper">
+        <section class="content-header">
+          <div class="container-fluid">
+            <h4>Tambah Data Pasien</h4>
+          </div>
+        </section>
+
+        <section class="content">
+          <div class="container-fluid">
+            <div class="peringatan" class="toasts-top-right fixed"></div>
+            <!-- peta -->
+            <div id="map" style="height: 500px" class="mb-3"></div>
+
+            <!-- Form input pasien -->
+            <form id="formPasien" style="display: none">
+              <input type="hidden" name="latitude" id="latitude" />
+              <input type="hidden" name="longitude" id="longitude" />
+
+              <input type="hidden" name="desa_kelurahan" id="desa_kelurahan" />
+              <input type="hidden" name="kecamatan" id="kecamatan" />
+              <input type="hidden" name="puskesmas" id="puskesmas" />
+              <input type="hidden" name="id_desa" id="id_desa" />
+
+              <div class="form-group">
+                <label>Nama Pasien : </label>
+                <input type="text" name="nama" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label>Umur Pasien : </label>
+                <input type="number" name="umur" class="form-control" required />
+              </div>
+
+              <div class="form-group">
+                <label>Jenis Kelamin : </label>
+                <select name="jenis_kelamin" id="jkSelect" class="form-control" required>
+                  {% for j in jenis_kelamin %}
+                  <option value="{{ j }}">{{ j }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Kunjungan : </label>
+                <select name="kunjungan" id="kunSelect" class="form-control" required>
+                  {% for k in kunjungan %}
+                  <option value="{{ k }}">{{ k }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary mt-2 mb-5">Simpan Data</button>
+            </form>
+          </div>
+        </section>
+      </div>
+
+      <footer class="main-footer text-center">
+        <strong>Website GIS &copy; 2025</strong>
+      </footer>
+
+      <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+      <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+      <!-- Leaflet JS -->
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+      <!-- SweetAlert2 -->
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+      <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          fetch("/ambil-isi-form")
+            .then((response) => response.json())
+            .then((data) => {
+              const jkSelect = document.getElementById("jkSelect");
+              const kunSelect = document.getElementById("kunSelect");
+
+              data.jenis_kelamin.forEach((item) => {
+                jkSelect.innerHTML += `<option value="${item}">${item}</option>`;
+              });
+
+              data.kunjungan.forEach((item) => {
+                kunSelect.innerHTML += `<option value="${item}">${item}</option>`;
+              });
+            });
+
+          const form = document.getElementById("formPasien");
+
+          /* localstorage untuk sekali kirim */
+          if (sessionStorage.getItem("sudahKirim")) {
+            form.style.display = "none";
+
+            const alertDiv = document.createElement("div");
+            alertDiv.className = "alert alert-info alert-dismissible fade show mt-3";
+            alertDiv.role = "alert";
+            alertDiv.innerHTML = `Anda sudah mengirim data pasien dan tidak bisa mengirim data lagi!!!
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>`;
+            document.querySelector(".container-fluid").prepend(alertDiv);
+          }
+
+          $(document).Toasts("create", {
+            class: "bg-warning",
+            title: "Perhatian!",
+            subtitle: "Info",
+            body: "Silakan klik pada peta untuk memilih lokasi pasien sebelum mengisi form.",
+          });
+        });
+
+        const map = L.map("map").setView([-6.9973271, 112.9253102], 12);
+
+        const basemap = {
+          OpenStreetMap: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"),
+        };
+        basemap.OpenStreetMap.addTo(map);
+
+        let marker;
+
+        function updateFormLocation(lat, lng) {
+          fetch("/cari-wilayah", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lat: lat, lng: lng }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (!data.error) {
+                document.getElementById("desa_kelurahan").value = data.nama_desa;
+                document.getElementById("kecamatan").value = data.kecamatan;
+                document.getElementById("puskesmas").value = data.puskesmas;
+                document.getElementById("id_desa").value = data.id_desa;
+              } else {
+                Swal.fire({
+                  icon: "error",
+                  title: "Wilayah Tidak Ditemukan",
+                  text: "Koordinat yang Anda pilih tidak sesuai dengan data.",
+                  confirmButtonText: "Ok",
+                });
+              }
+            })
+            .catch((err) => {
+              console.error("Gagal memuat Wilayah: ", err);
+              Swal.fire({
+                icon: "error",
+                title: "Terjadi Kesalahan",
+                text: "Gagal memuat data wilayah. Silakan coba lagi",
+                confirmButtonText: "Ok",
+              });
+            });
+        }
+
+        map.on("click", function (e) {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+
+          if (marker) map.removeLayer(marker);
+          marker = L.marker(e.latlng, { draggable: true }).addTo(map);
+
+          document.getElementById("latitude").value = lat;
+          document.getElementById("longitude").value = lng;
+
+          document.getElementById("formPasien").style.display = "block";
+          updateFormLocation(lat, lng);
+
+          $(document).Toasts("create", {
+            class: "bg-info",
+            title: "Lokasi Dipilih",
+            subtitle: "Koordinat",
+            body: `Latitude: ${lat.toFixed(4)}, Longitude: ${lng.toFixed(4)}`,
+          });
+        });
+
+        document.getElementById("formPasien").addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const form = this;
+          const btnSubmit = form.querySelector('button[type="submit"]');
+
+          Swal.fire({
+            title: "Apakah Anda Sudah Yakin?",
+            text: "Pastikan data pasien benar karena hanya dapat diisi 1 kali, jika ada yang salah silakan hubungi kontak kami!!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "green",
+            cancelButtonColor: "red",
+            confirmButtonText: "Ya, Simpan",
+            cancelButtonText: "Batal",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              btnSubmit.disabled = true;
+
+              const data = {
+                nama: form.elements["nama"].value,
+                umur: parseInt(form.elements["umur"].value),
+                jenis_kelamin: form.elements["jenis_kelamin"].value,
+                kunjungan: form.elements["kunjungan"].value,
+                desa_kelurahan: form.elements["desa_kelurahan"].value,
+                kecamatan: form.elements["kecamatan"].value,
+                puskesmas: form.elements["puskesmas"].value,
+                id_desa: parseInt(form.elements["id_desa"].value),
+                latitude: parseFloat(form.elements["latitude"].value),
+                longitude: parseFloat(form.elements["longitude"].value),
+              };
+
+              fetch("/simpan-pasien", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+              })
+                .then((respon) => respon.json())
+                .then((respon) => {
+                  if (respon.success) {
+                    sessionStorage.setItem("sudahKirim", "true");
+
+                    Swal.fire({
+                      title: "Berhasil",
+                      text: "Data Pasien berhasil disimpan.",
+                      icon: "success",
+                      confirmButtonText: "OK",
+                    }).then(() => {
+                      window.location.reload();
+                    });
+                  } else {
+                    Swal.fire("Gagal!", respon.message, "error");
+                    btnSubmit.disabled = false;
+                  }
+                })
+                .catch((err) => {
+                  console.error("gagal simpan data: ", err);
+                  Swal.fire("Error!", "Terjadi kesalahan saat menyimpan data", "error");
+                  btnSubmit.disabled = false;
+                });
+            }
+          });
+        });
+      </script>
+    </div>
+  </body>
+</html>

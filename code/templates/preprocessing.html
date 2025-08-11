@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tahap Preprocessing</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+    <style>
+      th {
+        white-space: normal !important;
+        word-wrap: break-word;
+        font-size: 12px;
+      }
+      td {
+        font-size: 12px;
+      }
+      .table-responsive {
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+
+  <body class="hold-transition layout-fixed sidebar-mini">
+    <div class="wrapper">
+      {% include 'navbar_admin.html' %} {% include 'sidebar_admin.html' %}
+
+      <div class="content-wrapper">
+        <section class="content-header">
+          <div class="container-fluid">
+            <h1 class="m-0">Preprocessing</h1>
+          </div>
+        </section>
+
+        <section class="content">
+          <div class="container-fluid">
+            <!-- One-Hot encoding -->
+            <div class="card">
+              <div class="card-body">
+                <h5 class="mb-3">Tabel Setelah One-Hot Encoding</h5>
+                <div class="table-responsive">
+                  <table id="TableOhe" class="table table-bordered table-striped table-hover text-nowrap">
+                    <thead class="thead-light">
+                      <tr>
+                        {% for kolom in kolom_ohe %}
+                        <th>{{ kolom }}</th>
+                        {% endfor %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for row in data_ohe %}
+                      <tr>
+                        {% for kolom in kolom_ohe %}
+                        <th>{{ row[kolom] }}</th>
+                        {% endfor %}
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- MinMax Normalization -->
+            <div class="card">
+              <div class="card-body">
+                <h5 class="mb-3">Tabel Setelah Min-Max Normalization</h5>
+                <div class="table-responsive">
+                  <table id="TableMinMax" class="table table-bordered table-striped table-hover text-nowrap">
+                    <thead class="thead-light">
+                      <tr>
+                        {% for kolom in kolom_minmax %}
+                        <th>{{ kolom }}</th>
+                        {% endfor %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for row in data_minmax %}
+                      <tr>
+                        {% for kolom in kolom_minmax %}
+                        <th>{{ row[kolom] }}</th>
+                        {% endfor %}
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="main-footer text-center">
+        <strong>Website GIS &copy; 2025</strong>
+      </footer>
+    </div>
+
+    <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- JQuery UI -->
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+    <!-- Bootstrap 4 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- AdminLte -->
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    <!-- DataTable -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- marker -->
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+    <script>
+      $(document).ready(function () {
+        $("#TableOhe, #TableMinMax").DataTable({
+          paging: true,
+          responsive: true,
+          searching: false,
+          pageLength: 10,
+          lengthChange: false,
+          ordering: false,
+        });
+      });
+    </script>
+  </body>
+</html>

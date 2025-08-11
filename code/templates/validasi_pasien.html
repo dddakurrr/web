@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Validasi data pasien</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+    <style>
+      #maps {
+        width: 100%;
+        height: calc(100vh - 150px);
+      }
+      .leflet-control-custom button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 18px;
+        cursor: pointer;
+      }
+      .leflet-control-custom button:hover {
+        background-color: #0056b3;
+      }
+
+      .custom-popup .leflet-popup-content-wrapper {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+      .custom-popup .leflet-popup-content {
+        margin: 0;
+        padding: 0;
+      }
+      .search-container {
+        position: static;
+        /* top: 10px;
+        right: 50px;
+        z-index: 9999; */
+        background: white;
+        padding: 5px;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      }
+      .search-container input {
+        border: 1px solid #ccc;
+        padding: 4px 8px;
+        width: 220px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+
+  <body class="hold-transition layout-fixed sidebar-mini">
+    <div class="wrapper">
+      {% include 'navbar_admin.html' %} {% include 'sidebar_admin.html' %}
+
+      <div class="content-wrapper">
+        <section class="content-header">
+          <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap">
+            <h1 class="mb-0">Data Pasien Sementara</h1>
+          </div>
+        </section>
+
+        <section class="content">
+          <div class="container-fluid">
+            <table class="table table-bordered table-striped" id="tableSementara" style="font-size: 14px; width: 100%">
+              <thead>
+                <tr>
+                  <th>Id Pasien</th>
+                  <th>Nama</th>
+                  <th>NIK</th>
+                  <th>Umur</th>
+                  <th>Jenis Kelamin</th>
+                  <th>Alamat</th>
+                  <th>Desa/Kelurahan</th>
+                  <th>Kecamatan</th>
+                  <th>Puskesmas</th>
+                  <th>Tanggal</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <footer class="main-footer text-center">
+        <strong>Website GIS &copy; 2025</strong>
+      </footer>
+
+      <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+      <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+      <!-- Leaflet JS -->
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+      <!-- SweetAlert2 -->
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+      <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+      <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+      <script>
+        $(document).ready(function () {
+          const table = $("#tableSementara").DataTable({
+            ajax: "/data-pasien-sementara",
+            columns: [
+              { data: "id" },
+              { data: "nama" },
+              { data: "nik" },
+              { data: "umur" },
+              { data: "jenis_kelamin" },
+              { data: "alamat" },
+              { data: "desa_kelurahan" },
+              { data: "kecamatan" },
+              { data: "puskesmas" },
+              { data: "tgl" },
+              {
+                data: null,
+                orderable: false,
+                searchable: false,
+                render: function (data) {
+                  return `
+                            <button class="btn btn-success btn-sm validasi" data-id="${data.id}">Validasi</button>
+                            <button class="btn btn-danger btn-sm hapus" data-id="${data.id}">Hapus</button>
+                        `;
+                },
+              },
+            ],
+            responsive: true,
+            pageLength: 15,
+            language: {
+              search: "Cari: ",
+              paginate: {
+                previous: '<i class="bi bi-arrow-left-circle"></i>',
+                next: '<i class="bi bi-arrow-right-circle"></i>',
+              },
+            },
+          });
+
+          // validasi data pasien
+          $("#tableSementara").on("click", ".validasi", function () {
+            const id = $(this).data("id");
+
+            Swal.fire({
+              title: "Setujui Data Pasien?",
+              text: "Data akan dipindahkan ke tabel permanen",
+              icon: "question",
+              showCancelButton: true,
+              confirmButtonText: "YA, setujui",
+              cancelButtonText: "Batal",
+              confirmButtonColor: "#28a745",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                fetch(`/setuju-pasien/${id}`, { method: "POST" })
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (data.success) {
+                      Swal.fire({
+                        position: "center",
+                        icon: "success",
+                        title: "Data berhasil dipindahkan!",
+                        showConfirmButton: false,
+                        timer: 1500,
+                      });
+                      table.ajax.reload();
+                    } else {
+                      Swal.fire("Error", data.message, "error");
+                    }
+                  });
+              }
+            });
+          });
+
+          // hapus data pasien di table sementara
+          $("#tableSementara").on("click", ".hapus", function () {
+            const id = $(this).data("id");
+
+            Swal.fire({
+              title: "Hapus Data Pasien?",
+              text: "Data ini akan dihapus dari tabel sementara",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonText: "YA, hapus",
+              cancelButtonText: "Batal",
+              confirmButtonColor: "#d33",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                fetch(`/hapus-sementara/${id}`, { method: "DELETE" })
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (data.success) {
+                      Swal.fire({
+                        position: "center",
+                        icon: "success",
+                        title: "Data berhasil dihapus!",
+                        showConfirmButton: false,
+                        timer: 1500,
+                      });
+                      table.ajax.reload();
+                    } else {
+                      Swal.fire("Error", data.message, "error");
+                    }
+                  });
+              }
+            });
+          });
+        });
+      </script>
+    </div>
+  </body>
+</html>

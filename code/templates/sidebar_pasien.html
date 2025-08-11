@@ -1,0 +1,70 @@
+<style>
+  .brand-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    min-height: 64px; /* agar tinggi logo konsisten */
+  }
+
+  .brand-image-xl,
+  .brand-image-xs {
+    display: block;
+  }
+</style>
+
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+  <a href="{{ url_for('user_home') }}" class="brand-link">
+    <!-- logo besar -->
+    <img src="{{ url_for('static', filename='img/logo_fix.png') }}" alt="Logo Website" class="brand-image-xl" style="max-height: 40px; width: auto; margin: auto; display: block" />
+
+    <!-- logo icon -->
+    <img src="{{ url_for('static', filename='img/logo_icon.png') }}" alt="Logo Website" class="brand-image-xs" style="max-height: 35px; width: auto; margin: auto; display: none" />
+  </a>
+
+  <div class="sidebar">
+    <nav class="mt-2">
+      <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+        <!-- dashboard -->
+        <li class="nav-item">
+          <a href="{{ url_for('user_home') }}" class="nav-link">
+            <i class="bi bi-map pr-2"></i>
+            <p>Dashboard</p>
+          </a>
+        </li>
+
+        <!-- Visualisasi -->
+        <li class="nav-item">
+          <a href="{{ url_for('visualisasi_peta_user') }}" class="nav-link">
+            <i class="bi bi-person-add pr-2"></i>
+            <p>Peta Sebaran Pasien</p>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>
+
+<script>
+  // ganti logo otomatis
+  document.addEventListener("DOMContentLoaded", function () {
+    const body = document.body;
+    const bigLogo = document.querySelector(".brand-image-xl");
+    const smallLogo = document.querySelector(".brand-image-xs");
+
+    const toggleLogo = () => {
+      if (body.classList.contains("sidebar-collapse")) {
+        bigLogo.style.display = "none";
+        smallLogo.style.display = "block";
+      } else {
+        bigLogo.style.display = "block";
+        smallLogo.style.display = "none";
+      }
+    };
+
+    toggleLogo();
+    document.querySelector('[data-widget="pushmenu"]').addEventListener("click", () => {
+      setTimeout(toggleLogo, 300);
+    });
+  });
+</script>

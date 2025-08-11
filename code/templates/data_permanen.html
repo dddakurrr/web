@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Pasien Permanen</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+    <style>
+      #maps {
+        width: 100%;
+        height: calc(100vh - 150px);
+      }
+      .leflet-control-custom button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 18px;
+        cursor: pointer;
+      }
+      .leflet-control-custom button:hover {
+        background-color: #0056b3;
+      }
+
+      .custom-popup .leflet-popup-content-wrapper {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+      .custom-popup .leflet-popup-content {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+
+  <body class="hold-transition layout-fixed sidebar-mini">
+    <div class="wrapper">
+      {% include 'navbar_admin.html' %} {% include 'sidebar_admin.html' %}
+
+      <div class="content-wrapper">
+        <section class="content-header">
+          <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap">
+            <h1 class="mb-0">Data Pasien Permanen</h1>
+            <div class="search-container d-flex align-items-center mt-2 mt-md-0">
+              <!-- <input type="text" id="searchInput" class="form-control" placeholder="Cari pasien/desa/kecamatan/puskesmas..." style="width: 250px" />
+              <button class="btn btn-primary ml-2" id="btnSearch">
+                <i class="fas fa-search"></i>
+              </button> -->
+            </div>
+          </div>
+        </section>
+
+        <section class="content">
+          <div class="container-fluid">
+            <div class="mt-3 table-responsive" id="tableContainer">
+              <table class="table table-bordered table-striped" id="tablePermanen" style="font-size: 14px; width: 100%">
+                <thead>
+                  <tr>
+                    <th>Id Pasien</th>
+                    <th>Nama</th>
+                    <th>NIK</th>
+                    <th>Umur</th>
+                    <th>Jenis Kelamin</th>
+                    <th>Alamat</th>
+                    <th>Desa/Kelurahan</th>
+                    <th>Kecamatan</th>
+                    <th>Puskesmas</th>
+                    <th>Tanggal</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Kunjungan</th>
+                    <th>Frekuensi Nafas</th>
+                    <th>Klasifikasi</th>
+                    <th>Tindak Lanjut</th>
+                    <th>Anti Biotika</th>
+                    <th>Kondisi Ulang</th>
+                    <th>Faktor Risiko</th>
+                    <th>Keterangan</th>
+                    <th>Cluter</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div id="maps"></div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="main-footer text-center">
+        <strong>Website GIS &copy; 2025</strong>
+      </footer>
+
+      <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+      <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+      <!-- Leaflet JS -->
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+      <!-- SweetAlert2 -->
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+      <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+      <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+      <script>
+        let map,
+          markerLayer,
+          markersIndex = {},
+          pasienDataIndex = {};
+
+        let markerEditPermanen = null;
+
+        $(document).ready(function () {
+          // Inisialisasi map
+          map = L.map("maps").setView([-6.9973271, 112.9253102], 12);
+
+          const basemap = {
+            OpenStreetMap: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"),
+          };
+          basemap.OpenStreetMap.addTo(map);
+
+          // tambahkan layer group
+          markerLayer = L.layerGroup().addTo(map);
+
+          // panggil fungsi untuk load marker
+          loadMarkers();
+
+          // load marker di peta
+          function loadMarkers() {
+            markerLayer.clearLayers();
+            markersIndex = {};
+            pasienDataIndex = {};
+
+            fetch("/data-pasien-permanen")
+              .then((res) => res.json())
+              .then((data) => {
+                data.data.forEach((p) => {
+                  const marker = L.marker([p.latitude, p.longitude], { draggale: false }).addTo(markerLayer);
+                  marker.bindPopup(`
+                    <div style="font-family: 'Poppins', sans-serif; font-size: 13px; padding: 5px 10px;">
+                      <div style="font-weight: bold; font-size: 14px; color: #007bff;">
+                        <i class="bi bi-person-circle"></i> ${p.nama}
+                      </div>
+                      <div style="margin-top: 4px;">
+                        <strong>Umur:</strong> ${p.umur} ${p.umur <= 12 ? "Bulan" : "Tahun"}<br>
+                        <i class="bi bi-geo-alt-fill"></i> ${p.desa_kelurahan}, ${p.kecamatan.toUpperCase()}
+                      </div>
+                    </div>
+                  `);
+                  markersIndex[p.id_permanen] = marker;
+                  pasienDataIndex[p.id_permanen] = p;
+                });
+              });
+          }
+
+          // table data permanen
+          const table = $("#tablePermanen").DataTable({
+            ajax: "/data-pasien-permanen",
+            columns: [
+              { data: "id_permanen" },
+              { data: "nama" },
+              { data: "nik" },
+              { data: "umur" },
+              { data: "jenis_kelamin" },
+              { data: "alamat" },
+              { data: "desa_kelurahan" },
+              { data: "kecamatan" },
+              { data: "puskesmas" },
+              { data: "tgl" },
+              { data: "latitude" },
+              { data: "longitude" },
+              { data: "kunjungan" },
+              { data: "frek_nafas" },
+              { data: "klasifikasi" },
+              { data: "tindak_lanjut" },
+              { data: "anti_biotika" },
+              { data: "kondisi_saat_kunjungan_ulang" },
+              { data: "faktor_risiko" },
+              { data: "keterangan" },
+              { data: "cluster" },
+              {
+                data: null,
+                orderable: false,
+                searchable: false,
+                render: function (data) {
+                  return `
+                    <button class="btn btn-info btn-sm lihat-lok" data-id="${data.id_permanen}">
+                      <i class="bi bi-geo-alt"></i> Lihat Lokasi
+                    </button>
+                    
+                    <button class="btn btn-danger btn-sm hapus-data" data-id="${data.id_permanen}">
+                      <i class="bi bi-trash"></i> Hapus Data
+                    </button>
+                  `;
+                },
+              },
+            ],
+            responsive: true,
+            pageLength: 15,
+            language: {
+              search: "Cari: ",
+              paginate: {
+                previous: '<i class="bi bi-arrow-left-circle"></i>',
+                next: '<i class="bi bi-arrow-right-circle"></i>',
+              },
+            },
+          });
+
+          // lihat koordinat & detail pop up
+          $("#tablePermanen").on("click", ".lihat-lok", function () {
+            const id = $(this).data("id");
+            const marker = markersIndex[id];
+            if (marker) {
+              map.flyTo(marker.getLatLng(), 18);
+              marker
+                .bindPopup(
+                  `
+                    <div style="font-family: 'Poppins', sans-serif; font-size: 13px; padding: 8px 12px;">
+                      <h6 style="margin-bottom: 10px; font-weight: 600;">Edit Data Pasien</h6>
+                      <button onclick="editLokasi(${id})" style="background:#007bff; color:white; width:100%; margin-bottom:5px; border:none; padding:6px; border-radius:6px;">
+                        <i class="bi bi-geo-alt-fill"></i> Edit Lokasi
+                      </button>
+                      <button onclick="editData(${id})" style="background:#ffc107; color:black; width:100%; margin-bottom:5px; border:none; padding:6px; border-radius:6px;">
+                        <i class="bi bi-pencil-square"></i> Edit Data Pasien
+                      </button>
+                      <button onclick="tampilkanInfoPasien(${id})" style="background:#dc3545; color:white; width:100%; border:none; padding:6px; border-radius:6px;">
+                        <i class="bi bi-x-circle"></i> Batal
+                      </button>
+                    </div>
+                  `
+                )
+                .openPopup();
+            }
+          });
+
+          $("#tablePermanen tbody").on("click", ".hapus-data", function () {
+            const id = $(this).data("id");
+            hapusData(id);
+          });
+
+          function hapusData(id) {
+            Swal.fire({
+              title: "Yakin Ingin menghapus data?",
+              text: "Data yang dihapus tidak dapat dikembalikan.",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonColor: "#d33",
+              cancelButtonColor: "#3085d6",
+              confirmButtonText: "Ya, Hapus",
+              cancelButtonText: "Tidak",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                fetch(`/hapus-permanen/${id}`, {
+                  method: "DELETE",
+                })
+                  .then((res) => res.json())
+                  .then((data) => {
+                    if (data.success) {
+                      Swal.fire("Berhasil", "Data telah dihapus", "success");
+                      $("#tablePermanen").DataTable().ajax.reload();
+                    } else {
+                      Swal.fire("Gagal", data.message || "Terjadi kesalahan", "error");
+                    }
+                  })
+                  .catch((err) => {
+                    console.error(err);
+                    Swal.fire("Error", "Gagal menghapus data", "error");
+                  });
+              }
+            });
+          }
+
+          // Refresh marker & table
+          table.on("draw", loadMarkers);
+        });
+
+        // fungsi menampilkan info sederhana di popup
+        function tampilkanInfoPasien(id) {
+          const p = pasienDataIndex[id];
+          const marker = markersIndex[id];
+          if (!marker || !p) return;
+
+          marker
+            .bindPopup(
+              `
+                <div style="font-family: 'Poppins', sans-serif; font-size: 13px; padding: 5px 10px;">
+                  <div style="font-weight: bold; font-size: 14px; color: #007bff;">
+                    <i class="bi bi-person-circle"></i> ${p.nama}
+                  </div>
+                  <div style="margin-top: 4px;">
+                    <strong>Umur:</strong> ${p.umur} ${p.umur <= 12 ? "Bulan" : "Tahun"}<br>
+                    <i class="bi bi-geo-alt-fill"></i> ${p.desa_kelurahan}, ${p.kecamatan.toUpperCase()}
+                  </div>
+                </div>
+              `
+            )
+            .openPopup();
+        }
+
+        function isiOtoWilayahUni(lat, lng, form = null) {
+          return fetch("/cari-wilayah", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lat: lat, lng: lng }),
+          })
+            .then((res) => res.json())
+            .then((dataWil) => {
+              console.log("Wilayah Baru: ", dataWil);
+
+              if (!dataWil.error && dataWil.id_desa !== null && dataWil.id_desa !== -1) {
+                if (form) {
+                  setSelectValUni(form["desa_kelurahan"], dataWil.nama_desa.toLowerCase());
+                  setSelectValUni(form["kecamatan"], dataWil.kecamatan.toLowerCase());
+                  setSelectValUni(form["puskesmas"], dataWil.puskesmas.toLowerCase());
+                }
+
+                return {
+                  nama_desa: dataWil.nama_desa,
+                  kecamatan: dataWil.kecamatan,
+                  puskesmas: dataWil.puskesmas,
+                  id_desa: dataWil.id_desa,
+                };
+              } else {
+                throw new Error("Wilayah tidak ditemukan");
+              }
+            });
+        }
+
+        // fungsi edit lokasi
+        function editLokasi(id) {
+          const marker = markersIndex[id];
+          if (!marker) return;
+
+          marker.dragging.enable();
+
+          marker
+            .bindPopup(
+              `
+                <div style="font-family: 'Poppins', sans-serif; text-align:center;">
+                  <strong>Silakan Pindahkan Marker Ke Lokasi Baru</strong><br><br>
+                  <button onclick="simpanLokasi(${id})" style="background:#28a745; color:white; padding:6px 12px; border:none; border-radius:5px; margin-right:5px;">
+                    <i class="bi bi-check-circle"></i> Simpan Lokasi
+                  </button>
+                  <button onclick="batalEditLokasi(${id})" style="background:#dc3545; color:white; padding:6px 12px; border:none; border-radius:5px;">
+                    <i class="bi bi-x-circle"></i> Batal
+                  </button>
+                </div>
+              `
+            )
+            .openPopup();
+        }
+
+        function simpanLokasi(id) {
+          const marker = markersIndex[id];
+          if (!marker) return;
+
+          const newLatLng = marker.getLatLng();
+
+          isiOtoWilayahUni(newLatLng.lat, newLatLng.lng)
+            .then((dataWilayah) => {
+              return fetch(`/update-koordinat-permanen/${id}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  latitude: newLatLng.lat,
+                  longitude: newLatLng.lng,
+                  desa_kelurahan: dataWilayah.nama_desa,
+                  kecamatan: dataWilayah.kecamatan,
+                  puskesmas: dataWilayah.puskesmas,
+                  id_desa: dataWilayah.id_desa,
+                }),
+              });
+            })
+            .then((res) => {
+              if (!res.ok) throw new Error("Gagal menyimpan data ke server");
+              return res.json();
+            })
+            .then((data) => {
+              if (data.success) {
+                Swal.fire("Berhasil", "Lokasi berhasil diperbarui!", "success");
+                marker.dragging.disable();
+                $("#tablePermanen").DataTable().ajax.reload();
+              } else {
+                Swal.fire("Error", data.message, "error");
+              }
+            })
+            .catch((err) => {
+              console.error(err);
+              Swal.fire("Error", "Gagal mengambil wilayah baru", "error");
+            });
+        }
+
+        function batalEditLokasi(id) {
+          const marker = markersIndex[id];
+          if (marker) marker.dragging.disable();
+          tampilkanInfoPasien(id);
+        }
+
+        // fungsi edit data
+        function editData(id) {
+          fetch(`/ambil-data-permanen/${id}`)
+            .then((res) => res.json())
+            .then((p) => {
+              if (markerEditPermanen) map.removeLayer(markerEditPermanen);
+              markerEditPermanen = L.marker([p.latitude, p.longitude], { draggale: false }).addTo(map);
+
+              const tanggal = p.tgl ? p.tgl.split("T")[0] : "";
+
+              const formEdit = `
+                <style>
+                  .popup-edit-form { width: 500px; font-family: 'Poppins', sans-serif;}
+                  .popup-edit-form .form-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                  }
+                  .popup-edit-form label {
+                    font-size: 13px;
+                    font-weight: 500;
+                  }
+                  .popup-edit-form .actions {
+                    grid-column: span 2;
+                    text-align: center;
+                    margin-top: 10px;
+                  }
+                  .popup-edit-form button {
+                    padding: 6px 12px;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    margin: 0 5px;
+                  }
+                  .popup-edit-form .btn-save { background: #28a745; color: #fff; }
+                  .popup-edit-form .btn-cancel { background: #dc3545; color: #fff; }
+
+                  .leaflet-popup-content {
+                    width: 500px !important;
+                  }
+                  .form-grid div {
+                    display: flex;
+                    flex-direction: column;
+                  }
+                </style>
+
+                <div class="popup-edit-form">
+                  <form id="formEditPermanen">
+                    <div class="form-grid">
+                      <div>
+                        <label>Nama: </label>
+                        <input name="nama" value="${p.nama}" required>
+                      </div>
+                      <div>
+                        <label>NIK: </label>
+                        <input name="nik" maxlength="16" value="${p.nik}" required>
+                      </div>
+                      <div>
+                        <label>Umur: </label>
+                        <input name="umur" type="number" value="${p.umur}" required>
+                      </div>
+                      <div>
+                        <label>Jenis Kelamin: </label>
+                        <select name="jenis_kelamin" required>
+                          <option value="Laki-laki" ${p.jenis_kelamin === "Laki-laki" ? "selected" : ""}>Laki-laki</option>
+                          <option value="Perempuan" ${p.jenis_kelamin === "Perempuan" ? "selected" : ""}>Perempuan</option>
+                        </select>
+                      </div>
+                      <div class="col-span-2">
+                        <label>Alamat: </label>
+                        <input name="alamat" value="${p.alamat}" required/>
+                      </div>
+                      <div>
+                        <label>Desa:</label>
+                        <input name="desa_kelurahan" value="${p.desa_kelurahan}" required/>
+                      </div>
+                      <div>
+                        <label>Kecamatan:</label>
+                        <input name="kecamatan" value="${p.kecamatan}" required/>
+                      </div>
+                      <div>
+                        <label>Puskesmas:</label>
+                        <input name="puskesmas" value="${p.puskesmas}" required/>
+                      </div>
+                      <div>
+                        <label>Tanggal:</label>
+                        <input name="tgl" type="date" value="${tanggal}" required/>
+                      </div>
+                      <div>
+                        <label>Kunjungan:</label>
+                        <select name="kunjungan" required>
+                          <option value="baru" ${p.kunjungan === "baru" ? "selected" : ""}>Baru</option>
+                          <option value="ulang" ${p.kunjungan === "ulang" ? "selected" : ""}>Ulang</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label>Frekuensi Nafas:</label>
+                        <input name="frek_nafas" type="number" value="${p.frek_nafas}" required/>
+                      </div>
+                      <div>
+                        <label>Klasifikasi:</label>
+                        <select name="klasifikasi" required>
+                          <option value="pneumonia" ${p.klasifikasi === "pneumonia" ? "selected" : ""}>Pneumonia</option>
+                          <option value="bukan pneumonia" ${p.klasifikasi === "bukan pneumonia" ? "selected" : ""}>Bukan Pneumonia</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label>Tindak Lanjut:</label>
+                        <select name="tindak_lanjut" required>
+                          <option value="rawat" ${p.tindak_lanjut === "rawat" ? "selected" : ""}>Rawat</option>
+                          <option value="rawat jalan" ${p.tindak_lanjut === "rawat jalan" ? "selected" : ""}>Rawat Jalan</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label>Anti Biotika:</label>
+                        <select name="anti_biotika" required>
+                          <option value="ya" ${p.anti_biotika === "ya" ? "selected" : ""}>Ya</option>
+                          <option value="tidak" ${p.anti_biotika === "tidak" ? "selected" : ""}>Tidak</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label>Kondisi Ulang:</label>
+                        <select name="kondisi_saat_kunjungan_ulang" required>
+                          <option value="baik" ${p.kondisi_saat_kunjungan_ulang === "baik" ? "selected" : ""}>Baik</option>
+                          <option value="buruk" ${p.kondisi_saat_kunjungan_ulang === "buruk" ? "selected" : ""}>Buruk</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label>Faktor Risiko:</label>
+                        <select name="faktor_risiko" required>
+                          <option value="lingkungan" ${p.faktor_risiko === "lingkungan" ? "selected" : ""}>Lingkungan</option>
+                          <option value="unggas" ${p.faktor_risiko === "unggas" ? "selected" : ""}>Unggas</option>
+                          <option value="penderita" ${p.faktor_risiko === "penderita" ? "selected" : ""}>Penderita</option>
+                        </select>
+                      </div>
+                      <div class="col-span-2">
+                        <label>Keterangan:</label>
+                        <input name="keterangan" value="${p.keterangan || ""}" />
+                      </div>
+                    </div>
+                    <div class="actions">
+                      <button type="submit" class="btn-save">Simpan</button>
+                      <button type="button" class="btn-cancel" id="batalEdit">Batal</button>
+                    </div>
+                  </form>
+                </div>
+              `;
+
+              markerEditPermanen.bindPopup(formEdit).openPopup();
+
+              setTimeout(() => {
+                const form = document.getElementById("formEditPermanen");
+                const btnBatal = document.getElementById("batalEdit");
+
+                form.onsubmit = (e) => {
+                  e.preventDefault();
+                  const data = Object.fromEntries(new FormData(form).entries());
+
+                  fetch(`/edit-pasien-permanen/${id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                  })
+                    .then((res) => res.json())
+                    .then((res) => {
+                      if (res.success) {
+                        Swal.fire("Berhasil", "Data pasien berhasil diperbarui", "success");
+                        $("#tablePermanen").DataTable().ajax.reload();
+                        map.removeLayer(markerEditPermanen);
+                      } else {
+                        Swal.fire("Gagal", res.message, "error");
+                      }
+                    });
+                };
+
+                btnBatal.onclick = () => {
+                  map.removeLayer(markerEditPermanen);
+                };
+              }, 200);
+            });
+        }
+
+        // fungsi hapus data
+        function hapusData(id) {
+          Swal.fire({
+            title: "Hapus Data?",
+            text: "Data ini akan dihapus.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Ya, hapus",
+            cancelButtonText: "Batal",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              fetch(`/hapus-permanen/${id}`, { method: "DELETE" })
+                .then((res) => res.json())
+                .then((data) => {
+                  if (data.success) {
+                    Swal.fire({ position: "center", icon: "success", title: "Data berhasil dihapus!", timer: 1500, showConfirmButton: false });
+                    $("#tablePermanen").DataTable().ajax.reload();
+                  } else {
+                    Swal.fire("Error", data.message, "error");
+                  }
+                });
+            }
+          });
+        }
+      </script>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dataset Pasien Pneumonia</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
+
+    <!-- Bootstrap 4 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+    <style>
+      .dataTables_wrapper .dataTables_filter input,
+      .dataTables_wrapper .dataTables_length select {
+        font-size: 14px;
+      }
+
+      table.dataTable {
+        font-size: 12px;
+        table-layout: auto;
+      }
+
+      table.dataTable th td {
+        font-size: 12px;
+        padding: 6px 8px;
+      }
+
+      .card-body p {
+        margin: 0;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+
+  <body class="hold-transition layout-fixed sidebar-mini">
+    <div class="wrapper">
+      {% include 'navbar_admin.html' %} {% include 'sidebar_admin.html' %}
+
+      <div class="content-wrapper">
+        <!-- header -->
+        <section class="content-header">
+          <div class="container-fluid">
+            <h1 class="display-5 fw-bold mb-2">Dataset Pasien Pneumonia</h1>
+          </div>
+        </section>
+
+        <!-- content -->
+        <section class="content">
+          <div class="container-fluid">
+            <div class="card">
+              <div class="card-body">
+                <p>Dataset asli merupakan data pasien pneumonia pada balita yang didapatkan dari Dinas Kesehatan Kabupaten Bangkalan tahun 2023</p>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div class="card">
+              <div class="card-body table-responsive">
+                <table id="tabelDataset" class="table table-bordered table-striped table-hover text-nowrap">
+                  <thead class="thead-light">
+                    <tr>
+                      <th>ID Pasien</th>
+                      <th>Tanggal</th>
+                      <th>Nama</th>
+                      <th>No. Registrasi</th>
+                      <th>Desa/Kelurahan</th>
+                      <th>Kecamatan</th>
+                      <th>Kunjungan</th>
+                      <th>Jenis Kelamin</th>
+                      <th>Umur</th>
+                      <th>Frekuensi Nafas</th>
+                      <th>Klasifikasi</th>
+                      <th>Tindak Lanjut</th>
+                      <th>Anti Biotika</th>
+                      <th>Kondisi Ulang</th>
+                      <th>Faktor Risiko</th>
+                      <th>Puskesmas</th>
+                      <th>Latitude</th>
+                      <th>Longitude</th>
+                      <th>Keterangan</th>
+                      <th>Cluster</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for row in data_pasien %}
+                    <tr>
+                      <td>{{ row.id_pasien }}</td>
+                      <td>{{ row.tgl }}</td>
+                      <td>{{ row.nama }}</td>
+                      <td>{{ row.no_reg }}</td>
+                      <td>{{ row.desa_kelurahan }}</td>
+                      <td>{{ row.kecamatan }}</td>
+                      <td>{{ row.kunjungan }}</td>
+                      <td>{{ row.jenis_kelamin }}</td>
+                      <td>{{ row.umur }}</td>
+                      <td>{{ row.frek_nafas }}</td>
+                      <td>{{ row.klasifikasi }}</td>
+                      <td>{{ row.tindak_lanjut }}</td>
+                      <td>{{ row.anti_biotika }}</td>
+                      <td>{{ row.kondisi_saat_kunjungan_ulang }}</td>
+                      <td>{{ row.faktor_risiko }}</td>
+                      <td>{{ row.puskesmas }}</td>
+                      <td>{{ row.latitude }}</td>
+                      <td>{{ row.longitude }}</td>
+                      <td>{{ row.ket_meninggal }}</td>
+                      <td>{{ row.cluster }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="main-footer text-center">
+        <strong>Website GIS &copy; 2025</strong>
+      </footer>
+    </div>
+
+    <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- JQuery UI -->
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+    <!-- Bootstrap 4 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- AdminLte -->
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    <!-- DataTable -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- marker -->
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+    <!-- Datatable -->
+    <script>
+      $(document).ready(function () {
+        $("#tabelDataset").DataTable({
+          pageLength: 20,
+          lengthChange: false,
+          language: {
+            search: "Cari: ",
+            paginate: {
+              previous: "Sebelumnya",
+              next: "Berikutnya",
+            },
+            info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+            infoEmpty: "Tidak ada data",
+            emptyTable: "Tidak ada data yang tersedia",
+          },
+          scrollX: true,
+          autoWidth: false,
+        });
+      });
+    </script>
+  </body>
+</html>

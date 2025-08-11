@@ -1,0 +1,138 @@
+<style>
+  .brand-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    min-height: 64px; /* agar tinggi logo konsisten */
+  }
+
+  .brand-image-xl,
+  .brand-image-xs {
+    display: block;
+  }
+</style>
+
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+  <a href="{{ url_for('dashboard') }}" class="brand-link">
+    <!-- logo besar -->
+    <img src="{{ url_for('static', filename='img/logo_fix.png') }}" alt="Logo Website" class="brand-image-xl" style="max-height: 40px; width: auto; margin: auto; display: block" />
+
+    <!-- logo icon -->
+    <img src="{{ url_for('static', filename='img/logo_icon.png') }}" alt="Logo Website" class="brand-image-xs" style="max-height: 35px; width: auto; margin: auto; display: none" />
+  </a>
+
+  <div class="sidebar">
+    <nav class="mt-2">
+      <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+        <!-- dashboard -->
+        <li class="nav-item">
+          <a href="{{ url_for('home') }}" class="nav-link">
+            <i class="bi bi-map pr-2"></i>
+            <p>Dashboard</p>
+          </a>
+        </li>
+
+        <!-- Dataset -->
+        <li class="nav-item">
+          <a href="{{ url_for('ambil_dataset') }}" class="nav-link">
+            <i class="bi bi-person-add pr-2"></i>
+            <p>Dataset</p>
+          </a>
+        </li>
+
+        <!-- Analisis DBSCAN -->
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon bi bi-bar-chart-line"></i>
+            <p>Analisis DBSCAN <i class="right fas fa-angle-left"></i></p>
+          </a>
+
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{{ url_for('prepro') }}" class="nav-link ml-4">
+                <i class="bi bi-chat-left-quote pr-2"></i>
+                <p>Preprocessing</p>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a href="{{ url_for('jarak') }}" class="nav-link ml-4">
+                <i class="bi bi-chat-left-quote pr-2"></i>
+                <p>Matriks Jarak</p>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a href="{{ url_for('hitung') }}" class="nav-link ml-4">
+                <i class="bi bi-chat-left-quote pr-2"></i>
+                <p>Clustering DBSCAN</p>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a href="{{ url_for('nilai') }}" class="nav-link ml-4">
+                <i class="bi bi-chat-left-quote pr-2"></i>
+                <p>Silhouette Coefficient</p>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a href="{{ url_for('visualisasi_peta') }}" class="nav-link ml-4">
+                <i class="bi bi-chat-left-quote pr-2"></i>
+                <p>Peta Sebaran Pasien</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Data Terbaru -->
+        <li class="nav-item has-treeview">
+          <a href="#" class="nav-link">
+            <i class="nav-icon bi bi-clipboard-data"></i>
+            <p>Data Terbaru <i class="right fas fa-angle-left"></i></p>
+          </a>
+          <ul class="nav nav-treeview">
+            <li class="nav-item">
+              <a href="{{ url_for('validasi_pasien') }}" class="nav-link ml-4">
+                <i class="bi bi-chat-left-quote pr-2"></i>
+                <p>Data Pendaftaran Sementara</p>
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a href="{{ url_for('tabel_pasien_permanen') }}" class="nav-link ml-4">
+                <i class="bi bi-chat-left-quote pr-2"></i>
+                <p>Data Pendaftaran Permanen</p>
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>
+
+<script>
+  // ganti logo otomatis
+  document.addEventListener("DOMContentLoaded", function () {
+    const body = document.body;
+    const bigLogo = document.querySelector(".brand-image-xl");
+    const smallLogo = document.querySelector(".brand-image-xs");
+
+    const toggleLogo = () => {
+      if (body.classList.contains("sidebar-collapse")) {
+        bigLogo.style.display = "none";
+        smallLogo.style.display = "block";
+      } else {
+        bigLogo.style.display = "block";
+        smallLogo.style.display = "none";
+      }
+    };
+
+    toggleLogo();
+    document.querySelector('[data-widget="pushmenu"]').addEventListener("click", () => {
+      setTimeout(toggleLogo, 300);
+    });
+  });
+</script>
