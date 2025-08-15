@@ -29,7 +29,7 @@ engine = create_engine("postgresql+psycopg2://postgres.qsbtjgxxrinqelrgjotk:Guda
 
 @app.route('/')
 def index():
-    return redirect(url_for('login'))
+    return redirect(url_for('user_home'))
 
 @app.route('/home')
 def home():
@@ -85,10 +85,13 @@ def dashboard():
 # masuk ke halaman user
 @app.route('/user_home')
 def user_home():
-    if 'user' not in session or session.get('role') != 'user':
-        flash("Anda harus login sebagai user untuk mengakses halaman ini")
-        return redirect(url_for('login'))
     return render_template("user_home.html")     # untuk kembali halaman yang dituju
+
+@app.route('/daftar_puskesmas')
+def daftar_puskesmas():
+    with engine.begin() as conn:
+        result = conn.execute(text("SELECT id_puskesmas, nama_puskesmas, alamat_puskesmas, nomor_telpon, link_maps FROM daftar_puskesmas")).fetchall()
+    return render_template("daftar_puskesmas.html", daftar_puskesmas=result)
 
 @app.route('/form-pasien')
 def guest_form():

@@ -23,7 +23,8 @@
     <style>
       #maps {
         width: 100%;
-        height: calc(100vh - 150px);
+        height: calc(100vh - 130px);
+        margin-bottom: 15px;
       }
       .leflet-control-custom button {
         background-color: #007bff;
@@ -46,11 +47,8 @@
         margin: 0;
         padding: 0;
       }
-      .search-container {
+      /* .search-container {
         position: static;
-        /* top: 10px;
-        right: 50px;
-        z-index: 9999; */
         background: white;
         padding: 5px;
         border-radius: 6px;
@@ -61,7 +59,7 @@
         padding: 4px 8px;
         width: 220px;
         border-radius: 4px;
-      }
+      } */
       .custom-modal {
         z-index: 1051;
         display: none;
@@ -111,29 +109,46 @@
         width: 100%;
         overflow-x: auto;
       }
+      .search-box {
+        display: flex;
+        justify-content: center; /* posisi center */
+        align-items: center;
+        gap: 5px;
+        margin: 15px auto 15px auto; /* jarak bawah 15px */
+        max-width: 450px;
+      }
+      .search-box input {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .search-box button {
+        flex-shrink: 0;
+      }
     </style>
   </head>
 
-  <body class="hold-transition layout-fixed sidebar-mini">
+  <body class="hold-transition layout-top-nav">
     <div class="wrapper">
-      {% include 'navbar_pasien.html' %} {% include 'sidebar_pasien.html' %}
+      {% include 'navbar_pasien.html' %}
 
       <div class="content-wrapper">
         <section class="content-header">
-          <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap">
-            <h1 class="mb-0">Peta Sebaran Pasien</h1>
+          <div class="container text-center">
+            <h1 class="fw-bold mb-2">Halo, Selamat Datang di <span class="text-primary">MyHealthy Bangkalan</span>!</h1>
+            <p class="lead text-muted mb-0">Daftar Puskesmas di Kabupaten Bangkalan</p>
+          </div>
 
-            <div class="search-container d-flex align-items-center mt-2 mt-md-0">
-              <input type="text" id="searchInput" class="form-control" placeholder="Cari pasien/desa/kecamatan/puskesmas..." style="width: 250px" />
-              <button class="btn btn-primary ml-2" id="btnSearch">
-                <i class="fas fa-search"></i>
-              </button>
-            </div>
+          <div class="search-box">
+            <input type="text" id="searchInput" class="form-control" placeholder="Cari pasien/desa/kecamatan/puskesmas..." style="width: 250px; min-width: 200px" />
+            <button class="btn btn-primary ml-2" id="btnSearch">
+              <i class="fas fa-search"></i>
+            </button>
           </div>
         </section>
 
         <section class="content">
-          <div class="container-fluid">
+          <div class="container-fluid" style="position: relative">
             <div id="maps"></div>
 
             <div id="hasilModal" class="custom-modal" aria-hidden="true" role="dialog" aria-labelledby="modalTitle">

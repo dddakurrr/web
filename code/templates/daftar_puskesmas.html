@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Homepage</title>
+    <title>Daftar Puskesmas</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css" />
 
@@ -19,8 +19,63 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
 
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
-  </head>
 
+    <style>
+      .flip-card {
+        background-color: transparent;
+        width: 100%;
+        height: 200px;
+        perspective: 1000px;
+      }
+      .flip-card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+      }
+      .flip-card:hover .flip-card-inner {
+        transform: rotateY(180deg);
+      }
+      .flip-card-front,
+      .flip-card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 15px;
+      }
+      .flip-card-front {
+        background-color: #f8f9fa;
+        color: black;
+      }
+      .flip-card-back {
+        background-color: #007bff;
+        color: white;
+        transform: rotateY(180deg);
+        flex-direction: column;
+      }
+      .btn-maps {
+        background-color: white;
+        color: #007bff;
+        font-weight: bold;
+        margin-top: 10px;
+        padding: 5px 10px;
+        border-radius: 5px;
+        text-decoration: none;
+      }
+      .btn-maps:hover {
+        background-color: #e9ecef;
+        text-decoration: none;
+      }
+    </style>
+  </head>
   <body class="hold-transition layout-top-nav">
     <div class="wrapper">
       {% include 'navbar_pasien.html' %}
@@ -28,26 +83,31 @@
         <section class="content-header py-4 bg-light border-bottom">
           <div class="container text-center">
             <h1 class="fw-bold mb-2">Halo, Selamat Datang di <span class="text-primary">MyHealthy Bangkalan</span>!</h1>
-            <p class="lead text-muted mb-0">Sistem Informasi Geografis (SIG) Penyebaran Penyakit Pneumonia pada Balita di Kabupaten Bangkalan</p>
+            <p class="lead text-muted mb-0">Daftar Puskesmas di Kabupaten Bangkalan</p>
           </div>
         </section>
 
         <section class="content py-5">
           <div class="container">
-            <div class="card shadow-sm border-0">
-              <div class="card-body fs-5">
-                <p>
-                  Website ini dirancang sebagai sarana informasi kesehatan khususnya untuk memantau dan mencegah
-                  <strong>Pneumonia pada Balita</strong> di Kabupaten Bangkalan, Jawa Timur.
-                </p>
-                <ul>
-                  <li>Melihat peta sebaran kasus Pneumonia secara real-time</li>
-                  <li>Mendaftar pemeriksaan kesehatan balita secara online</li>
-                  <li>Mendapatkan tips pencegahan dan informasi medis terpercaya</li>
-                </ul>
-                <p class="mt-3">Dengan informasi yang akurat dan layanan yang mudah diakses, diharapkan masyarakat dapat lebih waspada dan sigap dalam menjaga kesehatan buah hati.</p>
-                <a href="{{ url_for('visualisasi_peta_user') }}" class="btn btn-primary btn-lg mt-2"> <i class="bi bi-geo-alt-fill me-2"></i>Lihat Peta Sebaran </a>
+            <div class="row">
+              {% for p in daftar_puskesmas %}
+              <div class="col-md-4 col-sm-6 mb-4">
+                <div class="flip-card">
+                  <div class="flip-card-inner">
+                    <!-- Depan -->
+                    <div class="flip-card-front">
+                      <h5 class="fw-bold">{{ p.nama_puskesmas }}</h5>
+                    </div>
+                    <!-- Belakang -->
+                    <div class="flip-card-back">
+                      <p class="mb-1"><strong>Alamat: </strong> {{ p.alamat_puskesmas }}</p>
+                      <p class="mb-1"><strong>Telpon: </strong> {{ p.nomor_telpon }}</p>
+                      <a href="{{ p.link_maps }}" target="_blank" class="btn-maps"> <i class="bi bi-geo-alt-fill"></i> Lihat di Google Maps </a>
+                    </div>
+                  </div>
+                </div>
               </div>
+              {% endfor %}
             </div>
           </div>
         </section>
