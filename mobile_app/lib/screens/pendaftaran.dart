@@ -90,7 +90,8 @@ class _PendaftaranPasienScreenState extends State<PendaftaranPasienScreen> {
   Future<void> _updateAlamatDariKoordinat(double lat, double lng) async {
     setState(() => _isUpdatingLocation = true);
 
-    final url = Uri.parse("http://192.168.43.187:5000/cari-wilayah");
+    final url =
+        Uri.parse("https://sig-pneumonia-4a86.up.railway.app/cari-wilayah");
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -176,7 +177,8 @@ class _PendaftaranPasienScreenState extends State<PendaftaranPasienScreen> {
 
     setState(() => _isLoading = true);
 
-    final url = Uri.parse("http://192.168.43.187:5000/api/pendaftaran");
+    final url =
+        Uri.parse("https://sig-pneumonia-4a86.up.railway.app/api/pendaftaran");
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},

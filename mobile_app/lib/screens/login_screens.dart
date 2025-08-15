@@ -24,7 +24,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> loginUser() async {
     setState(() => _isLoading = true);
 
-    final url = Uri.parse('http://192.168.43.187:5000/api/login');
+    final url =
+        Uri.parse('https://sig-pneumonia-4a86.up.railway.app/api/login');
     final response = await http
         .post(
           url,

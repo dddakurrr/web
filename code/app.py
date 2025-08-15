@@ -19,10 +19,12 @@ from shapely.geometry import Point, shape
 from scipy.spatial.distance import pdist, squareform
 from kneed import KneeLocator
 from sqlalchemy import create_engine, text
+from flask_cors import CORS
 
 # untuk mengatur flask dimana letak file yang sedang berjalan
 app = Flask(__name__)
 app.secret_key = 'amankan111'  # untuk mengamankan session pengguna
+CORS(app)
 
 # connect ke database
 engine = create_engine("postgresql+psycopg2://postgres.qsbtjgxxrinqelrgjotk:Gudangair0407@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres")

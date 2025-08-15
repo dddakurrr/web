@@ -23,7 +23,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // baris 25-35 berfungsi untuk mengirimkan POST request ke API register
   Future<void> registerUser() async {
-    final url = Uri.parse('http://192.168.43.187:5000/api/register');
+    final url =
+        Uri.parse('https://sig-pneumonia-4a86.up.railway.app/api/register');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
