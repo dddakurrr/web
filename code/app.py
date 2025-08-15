@@ -823,6 +823,27 @@ def get_lokasi():
     except Exception as e:
         return jsonify({"status": "error", "message": "Gagal mendapatkan Lokasi", "error": str(e)}), 500
 
+@app.route('/api/cek-nik', methods=['POST'])
+def cek_nik():
+    data = request.get_json()
+    nik = data.get('nik')
+
+    if not nik:
+        return jsonify({"status": "error", "message": "NIK tidak boleh kosong"}), 400
+    
+    try:
+        with engine.begin() as conn:
+            query = text("SELECT * FROM data_pasien_sementara WHERE nik = :nik")
+            result = conn.execute(query, {"nik": nik}).fetchone()
+
+            if result:
+                return jsonify({
+                    "exists": bool(result),
+                }), 200
+    
+    except Exception as e:
+        return jsonify({"exists": False, "message": str(e)}), 500
+
 @app.route('/validasi-pasien')
 def validasi_pasien():
     return render_template('validasi_pasien.html')

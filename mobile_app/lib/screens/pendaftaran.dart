@@ -35,6 +35,7 @@ class _PendaftaranPasienScreenState extends State<PendaftaranPasienScreen> {
   bool _isLoading = false;
   bool _isUpdatingLocation = false;
   int? idDesa;
+  bool _nikSudahDipakai = false;
 
   // berfungsi untuk mengambil lokasi awal gps user berada
   @override
@@ -214,6 +215,28 @@ class _PendaftaranPasienScreenState extends State<PendaftaranPasienScreen> {
     }
   }
 
+  Future<void> _cekNikSudahAda(String nik) async {
+    final url =
+        Uri.parse("https://sig-pneumonia-4a86.up.railway.app/api/cek-nik");
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"nik": nik}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // backend mengirim { "exists": true/false }
+        setState(() {
+          _nikSudahDipakai = data['exists'] ?? false;
+        });
+      }
+    } catch (e) {
+      print("Error cek NIK: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -260,12 +283,26 @@ class _PendaftaranPasienScreenState extends State<PendaftaranPasienScreen> {
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: nikCtrl,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: "NIK Pasien",
                       border: OutlineInputBorder(),
+                      suffixIcon: _nikSudahDipakai
+                          ? Icon(Icons.error, color: Colors.red)
+                          : null,
                     ),
-                    validator: (val) =>
-                        val!.length < 16 ? "NIK tidak valid" : null,
+                    keyboardType: TextInputType.number,
+                    validator: (val) => val!.length < 16
+                        ? "NIK tidak valid"
+                        : _nikSudahDipakai
+                            ? "NIK sudah digunakan"
+                            : null,
+                    onChanged: (val) async {
+                      if (val.length == 16) {
+                        _cekNikSudahAda(val);
+                      } else {
+                        setState(() => _nikSudahDipakai = false);
+                      }
+                    },
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
