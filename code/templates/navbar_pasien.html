@@ -1,33 +1,37 @@
-<nav class="main-header navbar navbar-expand navbar-white navbar-light">
+<nav class="main-header navbar navbar-expand-lg navbar-white navbar-light">
   <div class="container-fluid">
-    <ul class="navbar-nav">
-      <!-- untuk membuka sidebar-->
-      <li class="nav-item">
-        <a href="/" class="navbar-brand">
-          <img src="{{ url_for('static', filename='img/logo_nobg.png') }}" alt="Logo Website" class="brand-image" style="height: 40px" />
-        </a>
-      </li>
+    <!-- untuk membuka sidebar-->
+    <a href="/" class="navbar-brand">
+      <img src="{{ url_for('static', filename='img/logo_nobg.png') }}" alt="Logo Website" class="brand-image" style="height: 40px" />
+    </a>
 
-      <!--Dashboard-->
-      <li class="nav-item d-none d-sm-inline-block">
-        <a class="nav-link" href="{{ url_for('user_home') }}">Dashboard</a>
-      </li>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-      <!-- Visualisasi -->
-      <li class="nav-item d-none d-sm-inline-block">
-        <a class="nav-link" href="{{ url_for('visualisasi_peta_user') }}">Peta Sebaran Pasien</a>
-      </li>
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <ul class="navbar-nav mr-auto">
+        <!--Dashboard-->
+        <li class="nav-item d-none d-sm-inline-block">
+          <a class="nav-link" href="{{ url_for('user_home') }}">Dashboard</a>
+        </li>
 
-      <!-- Daftar Puskesmas -->
-      <li class="nav-item d-none d-sm-inline-block">
-        <a class="nav-link" href="{{ url_for('daftar_puskesmas') }}">Daftar Puskesmas</a>
-      </li>
-    </ul>
+        <!-- Visualisasi -->
+        <li class="nav-item d-none d-sm-inline-block">
+          <a class="nav-link" href="{{ url_for('visualisasi_peta_user') }}">Peta Sebaran Pasien</a>
+        </li>
 
-    <ul class="navbar-nav ms-auto">
-      <li class="nav-item">
-        <a href="{{ url_for('login') }}" class="nav-link fw-bold"> <i class="bi bi-box-arrow-right me-1"></i> Login </a>
-      </li>
-    </ul>
+        <!-- Daftar Puskesmas -->
+        <li class="nav-item d-none d-sm-inline-block">
+          <a class="nav-link" href="{{ url_for('daftar_puskesmas') }}">Daftar Puskesmas</a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a href="{{ url_for('login') }}" class="nav-link fw-bold"> <i class="bi bi-box-arrow-right me-1"></i> Login </a>
+        </li>
+      </ul>
+    </div>
   </div>
 </nav>

@@ -339,13 +339,23 @@
           }
 
           const filtered = allPatients.filter((p) => {
-            return (p.nama && p.nama.toLowerCase().includes(q)) || (p.desa && p.desa.toLowerCase().includes(q)) || (p.kecamatan && p.kecamatan.toLowerCase().includes(q)) || (p.puskesmas && p.puskesmas.toLowerCase().includes(q));
+            return (
+              (p.id && p.id.toString().includes(q)) ||
+              (p.nama && p.nama.toLowerCase().includes(q)) ||
+              (p.desa && p.desa.toLowerCase().includes(q)) ||
+              (p.kecamatan && p.kecamatan.toLowerCase().includes(q)) ||
+              (p.puskesmas && p.puskesmas.toLowerCase().includes(q))
+            );
           });
 
           resultTableBody.innerHTML = "";
 
           if (filtered.length === 0) {
-            alert("Data pasien tidak ditemukan");
+            Swal.fire({
+              icon: "error",
+              title: "Data pasien tidak ditemukan",
+              text: "Tidak ada pasien yang sesuai dengan pencarian Anda.",
+            });
             return;
           }
 
