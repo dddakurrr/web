@@ -111,6 +111,11 @@
         width: 100%;
         overflow-x: auto;
       }
+      .small-swal-popup {
+        width: 300px !important;
+        font-size: 0.8rem;
+        padding: 0.9rem;
+      }
     </style>
   </head>
 
@@ -624,14 +629,30 @@
                     .then((res) => res.json())
                     .then((res) => {
                       if (res.success) {
-                        Swal.fire("Berhasil", "Data pasien berhasil ditambahkan", "success");
+                        Swal.fire({
+                          title: "Berhasil",
+                          text: "Data pasien berhasil ditambahkan",
+                          icon: "success",
+                          confirmButtonText: "OKE",
+                          customClass: {
+                            popup: "small-swal-popup",
+                          },
+                        });
                         map.removeLayer(markerTambah);
                         markerTambah = null;
                         addMode = false;
                         map.getContainer().style.cursor = "";
                         loadLayerPasien([data.latitude, data.longitude], res.id);
                       } else {
-                        Swal.fire("Gagal", res.message, "error");
+                        Swal.fire({
+                          title: "Gagal",
+                          text: res.message,
+                          icon: "error",
+                          confirmButtonText: "OKE",
+                          customClass: {
+                            popup: "small-swal-popup",
+                          },
+                        });
                       }
                     });
                 };
@@ -723,12 +744,18 @@
                 cancelButtonColor: "#3085d6",
                 confirmButtonText: "Ya, Hapus",
                 cancelButtonText: "Batal",
+                customClass: {
+                  popup: "small-swal-popup",
+                },
               }).then((result) => {
                 if (result.isConfirmed) {
                   Swal.fire({
                     title: "Menghapus..",
                     text: "Sedang menghapus data pasien",
                     allowOutsideClick: false,
+                    customClass: {
+                      popup: "small-swal-popup",
+                    },
                     didOpen: () => {
                       Swal.showLoading();
                     },
@@ -745,16 +772,35 @@
                           text: "Data pasien berhasil dihapus.",
                           icon: "success",
                           confirmButtonText: "OKE",
+                          customClass: {
+                            popup: "small-swal-popup",
+                          },
                         }).then(() => {
                           map.closePopup();
                           loadLayerPasien();
                         });
                       } else {
-                        Swal.fire("Gagal", res.message, "error");
+                        Swal.fire({
+                          title: "Gagal",
+                          text: res.message,
+                          icon: "error",
+                          confirmButtonText: "OKE",
+                          customClass: {
+                            popup: "small-swal-popup",
+                          },
+                        });
                       }
                     })
                     .catch((err) => {
-                      Swal.fire("Error", "Gagal menghapus: " + err.message, "error");
+                      Swal.fire({
+                        title: "Error",
+                        text: "Gagal menghapus: " + err.message,
+                        icon: "error",
+                        confirmButtonText: "OKE",
+                        customClass: {
+                          popup: "small-swal-popup",
+                        },
+                      });
                     });
                 }
               });
@@ -809,6 +855,9 @@
                       title: "Wilayah Tidak Ditemukan",
                       text: "Wilayah tidak tersedia di Database",
                       confirmButtonColor: "#d33",
+                      customClass: {
+                        popup: "small-swal-popup",
+                      },
                     });
                     return;
                   }
@@ -833,6 +882,9 @@
                           title: "Gagal",
                           text: "Lokasi gagal diperbarui",
                           confirmButtonColor: "#d33",
+                          customClass: {
+                            popup: "small-swal-popup",
+                          },
                         });
                         return;
                       }
@@ -842,6 +894,9 @@
                         title: "Berhasil",
                         text: "Lokasi berhasil diperbarui",
                         confirmButtonColor: "#3085d6",
+                        customClass: {
+                          popup: "small-swal-popup",
+                        },
                       }).then(() => {
                         if (markerEdit) {
                           map.removeLayer(markerEdit);
@@ -856,6 +911,9 @@
                         title: "Error!",
                         text: "Terjadi Kesalahan: " + err.message,
                         confirmButtonColor: "#d33",
+                        customClass: {
+                          popup: "small-swal-popup",
+                        },
                       });
                     });
                 })
@@ -865,6 +923,9 @@
                     title: "Error!",
                     text: "Wilayah gagal ditemukan: " + err.message,
                     confirmButtonColor: "#d33",
+                    customClass: {
+                      popup: "small-swal-popup",
+                    },
                   });
                 });
             };
@@ -1032,6 +1093,10 @@
                         icon: "success",
                         title: "Berhasil",
                         text: "Data pasien berhasil diperbarui",
+                        confirmButtonText: "OKE",
+                        customClass: {
+                          popup: "small-swal-popup",
+                        },
                       }).then(() => {
                         if (markerEdit) {
                           map.removeLayer(markerEdit);
@@ -1071,7 +1136,7 @@
           // Tombol close
           $("#closePanel").on("click", function () {
             $("#hasilModal").hide();
-          }); /* 
+          }); /*
 
           $(".modal-dialog").draggable({
             handle: ".modal-header",

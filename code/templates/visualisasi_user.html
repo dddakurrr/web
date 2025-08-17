@@ -121,9 +121,13 @@
         flex: 1;
         min-width: 200px;
       }
-
       .search-box button {
         flex-shrink: 0;
+      }
+      .small-swal-popup {
+        width: 300px !important;
+        font-size: 0.8rem;
+        padding: 0.9rem;
       }
     </style>
   </head>
@@ -136,7 +140,7 @@
         <section class="content-header">
           <div class="container text-center">
             <h1 class="fw-bold mb-2">Halo, Selamat Datang di <span class="text-primary">MyHealthy Bangkalan</span>!</h1>
-            <p class="lead text-muted mb-0">Daftar Puskesmas di Kabupaten Bangkalan</p>
+            <p class="lead text-muted mb-0">Silakan melihat penyebaran pasien pneumonia pada balita</p>
           </div>
 
           <div class="search-box">
@@ -355,6 +359,9 @@
               icon: "error",
               title: "Data pasien tidak ditemukan",
               text: "Tidak ada pasien yang sesuai dengan pencarian Anda.",
+              customClass: {
+                popup: "small-swal-popup",
+              },
             });
             return;
           }

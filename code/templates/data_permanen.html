@@ -40,6 +40,11 @@
         margin: 0;
         padding: 0;
       }
+      .small-swal-popup {
+        width: 300px !important;
+        font-size: 0.8rem;
+        padding: 0.9rem;
+      }
     </style>
   </head>
 
@@ -266,6 +271,9 @@
               cancelButtonColor: "#3085d6",
               confirmButtonText: "Ya, Hapus",
               cancelButtonText: "Tidak",
+              customClass: {
+                popup: "small-swal-popup",
+              },
             }).then((result) => {
               if (result.isConfirmed) {
                 fetch(`/hapus-permanen/${id}`, {
@@ -274,15 +282,40 @@
                   .then((res) => res.json())
                   .then((data) => {
                     if (data.success) {
-                      Swal.fire("Berhasil", "Data telah dihapus", "success");
+                      Swal.fire({
+                        title: "Berhasil",
+                        text: "Data telah dihapus",
+                        icon: "success",
+                        showConfirmButton: false,
+                        timer: 1500,
+                        customClass: {
+                          popup: "small-swal-popup",
+                        },
+                      });
                       $("#tablePermanen").DataTable().ajax.reload();
                     } else {
-                      Swal.fire("Gagal", data.message || "Terjadi kesalahan", "error");
+                      Swal.fire({
+                        title: "Gagal",
+                        text: data.message || "Terjadi kesalahan",
+                        icon: "error",
+                        confirmButtonText: "OKE",
+                        customClass: {
+                          popup: "small-swal-popup",
+                        },
+                      });
                     }
                   })
                   .catch((err) => {
                     console.error(err);
-                    Swal.fire("Error", "Gagal menghapus data", "error");
+                    Swal.fire({
+                      title: "Error",
+                      text: "Gagal menghapus data",
+                      icon: "error",
+                      confirmButtonText: "OKE",
+                      customClass: {
+                        popup: "small-swal-popup",
+                      },
+                    });
                   });
               }
             });
@@ -395,16 +428,39 @@
             })
             .then((data) => {
               if (data.success) {
-                Swal.fire("Berhasil", "Lokasi berhasil diperbarui!", "success");
+                Swal.fire({
+                  title: "Berhasil",
+                  text: "Lokasi berhasil diperbarui!",
+                  icon: "success",
+                  customClass: {
+                    popup: "small-swal-popup",
+                  },
+                });
                 marker.dragging.disable();
                 $("#tablePermanen").DataTable().ajax.reload();
               } else {
-                Swal.fire("Error", data.message, "error");
+                Swal.fire({
+                  title: "Gagal",
+                  text: data.message || "Terjadi kesalahan saat memperbarui lokasi",
+                  icon: "error",
+                  confirmButtonText: "OKE",
+                  customClass: {
+                    popup: "small-swal-popup",
+                  },
+                });
               }
             })
             .catch((err) => {
               console.error(err);
-              Swal.fire("Error", "Gagal mengambil wilayah baru", "error");
+              Swal.fire({
+                title: "Error",
+                text: err.message || "Gagal mengambil wilayah baru",
+                icon: "error",
+                confirmButtonText: "OKE",
+                customClass: {
+                  popup: "small-swal-popup",
+                },
+              });
             });
         }
 
@@ -580,11 +636,29 @@
                     .then((res) => res.json())
                     .then((res) => {
                       if (res.success) {
-                        Swal.fire("Berhasil", "Data pasien berhasil diperbarui", "success");
+                        Swal.fire({
+                          title: "Berhasil",
+                          position: "center",
+                          icon: "success",
+                          text: "Data pasien berhasil diperbarui!",
+                          showConfirmButton: false,
+                          timer: 1500,
+                          customClass: {
+                            popup: "small-swal-popup",
+                          },
+                        });
                         $("#tablePermanen").DataTable().ajax.reload();
                         map.removeLayer(markerEditPermanen);
                       } else {
-                        Swal.fire("Gagal", res.message, "error");
+                        Swal.fire({
+                          title: "Gagal",
+                          text: res.message || "Terjadi kesalahan saat memperbarui data",
+                          icon: "error",
+                          confirmButtonText: "OKE",
+                          customClass: {
+                            popup: "small-swal-popup",
+                          },
+                        });
                       }
                     });
                 };
@@ -605,16 +679,36 @@
             showCancelButton: true,
             confirmButtonText: "Ya, hapus",
             cancelButtonText: "Batal",
+            customClass: {
+              popup: "small-swal-popup",
+            },
           }).then((result) => {
             if (result.isConfirmed) {
               fetch(`/hapus-permanen/${id}`, { method: "DELETE" })
                 .then((res) => res.json())
                 .then((data) => {
                   if (data.success) {
-                    Swal.fire({ position: "center", icon: "success", title: "Data berhasil dihapus!", timer: 1500, showConfirmButton: false });
+                    Swal.fire({
+                      position: "center",
+                      icon: "success",
+                      title: "Data berhasil dihapus!",
+                      timer: 1500,
+                      showConfirmButton: false,
+                      customClass: {
+                        popup: "small-swal-popup",
+                      },
+                    });
                     $("#tablePermanen").DataTable().ajax.reload();
                   } else {
-                    Swal.fire("Error", data.message, "error");
+                    Swal.fire({
+                      title: "Gagal",
+                      text: data.message || "Terjadi kesalahan saat menghapus data",
+                      icon: "error",
+                      confirmButtonText: "OKE",
+                      customClass: {
+                        popup: "small-swal-popup",
+                      },
+                    });
                   }
                 });
             }
