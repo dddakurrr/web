@@ -37,27 +37,33 @@ def index():
 def home():
     return render_template('home.html')
 
+# masuk ke halaman login untuk admin
 @app.route('/login', methods=['GET',  'POST'])
 def login():
+    # jika user klik tombol login, server ambil email dan password dari form
     if request.method == 'POST':
         email = request.form['email']
         pwd = request.form['password']
 
+        # validasi input (jika salah satu kosong akan kembali ke halaman login)
         if not email or not pwd:
             flash('Email dan Password wajib diisi')
             return redirect(url_for('login'))
         
         try: 
+            # mengkoneksikan ke database dan melakukan query untuk mengecek email (fetchone mengambil satu baris data saja)
             with engine.begin() as conn:
                 query = text("SELECT username, password, role FROM data_user WHERE email = :email")
                 result = conn.execute(query, {"email": email}).fetchone()
 
+                # mengecek apakah email terdaftar atau tidak
                 if not result:
                     flash('email tidak terdaftar')
                     return redirect(url_for('login'))
                 
-                db_username, db_password, db_role = result
+                db_username, db_password, db_role = result #pisahkan hasil query menjadi variabel terpisah
 
+                # verifikasi password, jika password benar maka admin akan diarahkan ke halaman dashboard dan jika password salah akan kembali ke halaman login
                 if pwd == db_password:
                     session['user'] = db_username
                     session['role'] = db_role
@@ -69,36 +75,40 @@ def login():
                 else:
                     flash('Password Salah')
                     return redirect(url_for('login'))
-            
+       
+        # jika terjadi error saat koneksi ke database    
         except Exception as e:
             flash(f"Gagal login: {str(e)}")
             return redirect(url_for('login'))
         
-    return render_template('login.html')
+    return render_template('login.html') # jika tidak ada request POST, maka tampilkan halaman login
 
 # masuk ke halaman admin
 @app.route('/dashboard')
 def dashboard():
     if 'user' not in session or session.get('role') != 'admin':
-        flash("Anda harus login sebagai admin untuk mengakses halaman ini")
         return redirect(url_for('login'))
     return render_template("home.html")     # untuk kembali halaman yang dituju
 
 # masuk ke halaman user
 @app.route('/user_home')
 def user_home():
-    return render_template("user_home.html")     # untuk kembali halaman yang dituju
+    return render_template("user_home.html") # untuk kembali halaman yang dituju
 
+# halaman daftar puskesmas
 @app.route('/daftar_puskesmas')
 def daftar_puskesmas():
+    # mengambil data puskesmas dari database
     with engine.begin() as conn:
         result = conn.execute(text("SELECT id_puskesmas, nama_puskesmas, alamat_puskesmas, nomor_telpon, link_maps FROM daftar_puskesmas")).fetchall()
     return render_template("daftar_puskesmas.html", daftar_puskesmas=result)
 
+# halaman form pasien
 @app.route('/form-pasien')
 def guest_form():
     return render_template('form_pasien.html')
 
+# halaman form pasien untuk user
 @app.route('/simpan-pasien', methods=['POST'])
 def simpan_pasien():
     data = request.get_json()
@@ -150,14 +160,17 @@ def simpan_pasien():
 
     return jsonify({'success': True, 'message': 'Data Pasien berhasil ditambahkan'})
 
+""" # halaman untuk pasien
 @app.route('/home_pasien')
 def home_pasien():
-    return render_template('home_pasien.html')
+    return render_template('home_pasien.html') """
 
+# halaman tambah pasien
 @app.route('/halaman_tambah_pasien')
 def halaman_tambah_pasien():
     return render_template('halaman_tambah_pasien.html')
 
+# halaman kontak kami
 @app.route('/kontak_kami')
 def kontak_kami_pasien():
     return render_template('kontak_kami_pasien.html')
@@ -175,6 +188,7 @@ def ambil_dataset():
 
     return render_template("dataset.html", data_pasien=data_pasien)
 
+# halaman preprocessing
 @app.route('/preprocessing')
 def prepro():
     # Query untuk mengambil data pasien
@@ -198,6 +212,7 @@ def prepro():
                            kolom_minmax = df_minmax.columns,
                            data_minmax = df_minmax.to_dict(orient='records'))
 
+# rute ke matriks jarak
 @app.route('/matriks_jarak')
 def jarak():
     # mengambil parameter halaman di url
@@ -397,11 +412,13 @@ def vis_pasien():
         })
     return jsonify({"type": "FeatureCollection", "features": features})     # mengembalikan data ke format geojson agar dapat di tampilkan dalam peta
 
+# halaman visualisasi peta
 @app.route('/visualisasi')
 def visualisasi_peta():
     print("membuka halaman visualisasi")
     return render_template('visualisasi.html')
 
+# melakukan visualisasi pasien untuk user
 @app.route('/visualisasi/pasien_user')
 def vis_pasien_user():
     # ambil tabel data_pasien
@@ -435,11 +452,11 @@ def vis_pasien_user():
 
     return jsonify({"type": "FeatureCollection", "features": features})
 
+# halaman visualisasi peta khusus untuk user
 @app.route('/visualisasi_user')
 def visualisasi_peta_user():
     return render_template('visualisasi_user.html')  # template khusus user
 
-    
 # mengambil isi kolom dari database (data dropdown)
 @app.route('/ambil-isi-form')
 def ambil_isi_data():
@@ -461,6 +478,7 @@ def ambil_isi_data():
 
     return jsonify(data_ambil)
 
+# halaman tambah data pasien
 @app.route('/tambah-data-pasien', methods=['POST'])
 def tambah_data_pasien():
     dataTambah = request.get_json()
@@ -520,6 +538,7 @@ def tambah_data_pasien():
 
     return jsonify({'success': True, 'message': 'Data Pasien berhasil ditambahkan'})
 
+# cari wilayah berdasarkan koordinat
 @app.route('/cari-wilayah', methods=['POST'])
 def cariWilayah():
     dataWil = request.get_json()
@@ -558,6 +577,7 @@ def cariWilayah():
         
     return jsonify({'error': 'Wilayah tidak ditemukan'}), 404
 
+# ambil data pasien berdasarkan id_pasien
 @app.route('/ambil-data-pasien/<int:id_pasien>')
 def ambil_data_pasien(id_pasien):
     with engine.connect() as conn:
@@ -567,6 +587,7 @@ def ambil_data_pasien(id_pasien):
             return jsonify({"success": True, "pasien": dict(hasil1._mapping)})
         return jsonify({"success": False, "message": "Data tidak ditemukan"}), 404
 
+# halaman edit data pasien
 @app.route('/edit-data-pasien/<int:id_pasien>', methods=['POST'])
 def edit_data_pasien(id_pasien):
     data = request.get_json()
@@ -617,6 +638,7 @@ def edit_data_pasien(id_pasien):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+# update koordinat pasien
 @app.route('/update-koordinat/<int:id_pasien>', methods=['POST'])
 def update_koordinat(id_pasien):
     data = request.get_json()
@@ -656,6 +678,7 @@ def update_koordinat(id_pasien):
         print("Gagal update koordinat", e)
         return jsonify({"success": False, "message": str(e)}), 500
 
+# hapus data pasien
 @app.route('/hapus-data-pasien/<int:id_pasien>', methods=['DELETE'])
 def hapus_data_pasien(id_pasien):
     try:
@@ -670,6 +693,7 @@ def hapus_data_pasien(id_pasien):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     
+# halaman untuk registrasi di flutter
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -698,6 +722,7 @@ def register():
     except Exception as e:
         return jsonify({"message": "Gagal Register", "error": str(e)}), 500
 
+# halaman untuk login di flutter
 @app.route('/api/login', methods=['POST'])
 def login_user():
     data = request.get_json()
@@ -727,6 +752,7 @@ def login_user():
     except Exception as e:
         return jsonify({"status": "error", "message": "Gagal Login", "error": str(e)}), 500
 
+# halaman untuk pendaftaran pasien dari aplikasi flutter
 @app.route('/api/pendaftaran', methods=['POST'])
 def pendaftaran_pasien():
     data = request.get_json()
@@ -790,7 +816,8 @@ def pendaftaran_pasien():
     
     except Exception as e:
         return jsonify({"status": "error", "message": "Gagal menyimpan data", "error": str(e)}), 500
-    
+
+# untuk mendapatkan lokasi berdasarkan koordinat     
 @app.route('/api/get-lokasi', methods=['POST'])
 def get_lokasi():
     data = request.get_json()
@@ -823,6 +850,7 @@ def get_lokasi():
     except Exception as e:
         return jsonify({"status": "error", "message": "Gagal mendapatkan Lokasi", "error": str(e)}), 500
 
+# untuk mengecek NIK apakah sudah ada di database
 @app.route('/api/cek-nik', methods=['POST'])
 def cek_nik():
     data = request.get_json()
@@ -844,17 +872,19 @@ def cek_nik():
     except Exception as e:
         return jsonify({"exists": False, "message": str(e)}), 500
 
+# halaman validasi pasien
 @app.route('/validasi-pasien')
 def validasi_pasien():
     return render_template('validasi_pasien.html')
 
+# halaman data pasien sementara
 @app.route('/data-pasien-sementara')
 def data_sementara():
     query = "SELECT * FROM data_pasien_sementara ORDER BY id DESC;"
     df = pd.read_sql(query, engine)
     return jsonify({"data": df.to_dict(orient="records")})
 
-
+# ambil data pasien sementara berdasarkan id
 @app.route('/setuju-pasien/<int:id>', methods=['POST'])
 def setuju_pasien(id):
     try:
@@ -879,6 +909,7 @@ def setuju_pasien(id):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
+# hapus data pasien sementara
 @app.route('/hapus-sementara/<int:id>', methods=['DELETE'])
 def hapus_sementara(id):
     try:
@@ -891,10 +922,12 @@ def hapus_sementara(id):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
 
+# halaman untuk tabel data pasien permanen
 @app.route('/tabel-pasien-permanen')
 def tabel_pasien_permanen():
     return render_template('data_permanen.html')
 
+# halaman untuk mengambil data pasien permanen
 @app.route('/data-pasien-permanen')
 def data_permanen():
     try:
@@ -917,6 +950,7 @@ def data_permanen():
     except Exception as e:
         return jsonify({"data": [], "error": str(e)})
 
+# halaman untuk mengambil data pasien permanen berdasarkan id
 @app.route('/ambil-data-permanen/<int:id>')
 def ambil_data_permanen(id):
     try:
@@ -931,6 +965,7 @@ def ambil_data_permanen(id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# halaman untuk mengedit data pasien permanen
 @app.route('/edit-pasien-permanen/<int:id>', methods=['POST'])
 def edit_pasien_permanen(id):
     try:
@@ -951,6 +986,7 @@ def edit_pasien_permanen(id):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     
+# halaman untuk menghapus data pasien permanen
 @app.route('/hapus-permanen/<int:id>', methods=['DELETE'])
 def hapus_permanen(id):
     try:
@@ -962,6 +998,7 @@ def hapus_permanen(id):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+# halaman untuk mengupdate koordinat permanen
 @app.route('/update-koordinat-permanen/<int:id>', methods=['POST'])
 def update_koordinat_permanen(id):
     try:
