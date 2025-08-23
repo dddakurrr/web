@@ -280,28 +280,37 @@
           console.log("Setel Nilai", selectEl.nama, "ke", value);
         }
 
-        function isiOtoWilayahUni(lat, lng, form = null) {
+        function isiOtoWilayahUni(lat, lon, form = null) {
           return fetch("/cari-wilayah", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lat: lat, lng: lng }),
+            body: JSON.stringify({ lat: lat, lon: lon }),
           })
-            .then((res) => res.json())
+            .then((res) => {
+              if (!res.ok) throw new Error("Gagal mengambil data wilayah");
+              return res.json();
+            })
             .then((dataWil) => {
               console.log("Wilayah Baru: ", dataWil);
 
-              if (!dataWil.error && dataWil.id_desa !== null && dataWil.id_desa !== -1) {
+              if (dataWil.error) {
+                throw new Error(dataWil.error);
+              }
+
+              const prop = dataWil.properties;
+
+              if (prop && prop.id_desa !== null && prop.id_desa !== -1) {
                 if (form) {
-                  setSelectValUni(form["desa_kelurahan"], dataWil.nama_desa.toLowerCase());
-                  setSelectValUni(form["kecamatan"], dataWil.kecamatan.toLowerCase());
-                  setSelectValUni(form["puskesmas"], dataWil.puskesmas.toLowerCase());
+                  setSelectValUni(form["desa_kelurahan"], prop.nama_desa.toLowerCase());
+                  setSelectValUni(form["kecamatan"], prop.kecamatan.toLowerCase());
+                  setSelectValUni(form["puskesmas"], prop.puskesmas.toLowerCase());
                 }
 
                 return {
-                  nama_desa: dataWil.nama_desa,
-                  kecamatan: dataWil.kecamatan,
-                  puskesmas: dataWil.puskesmas,
-                  id_desa: dataWil.id_desa,
+                  nama_desa: prop.nama_desa,
+                  kecamatan: prop.kecamatan,
+                  puskesmas: prop.puskesmas,
+                  id_desa: prop.id_desa,
                 };
               } else {
                 throw new Error("Wilayah tidak ditemukan");
@@ -612,6 +621,16 @@
                 const formEl = document.getElementById("formTambahPasien");
 
                 if (!formEl) return;
+
+                isiOtoWilayahUni(latlng.lat, latlng.lng, formEl).catch((err) => {
+                  console.warn(err.message);
+                  Swal.fire({
+                    title: "Peringatan",
+                    text: "Wilayah tidak ditemukan, harap pilih manual",
+                    icon: "warning",
+                    confirmButtonText: "OKE",
+                  });
+                });
 
                 formEl.onsubmit = (e) => {
                   e.preventDefault();

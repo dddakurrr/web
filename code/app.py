@@ -29,6 +29,65 @@ CORS(app)
 # connect ke database
 engine = create_engine("postgresql+psycopg2://postgres.qsbtjgxxrinqelrgjotk:Gudangair0407@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres")
 
+""" @app.route('/import-desa')
+def import_desa():
+    with open("data/hasil_desa_bangkalan.geojson", "r", encoding="utf-8") as f:
+        geojson = json.load(f)
+
+    with engine.begin() as conn:
+        for feature in geojson["features"]:
+            props = feature["properties"]
+            geom = json.dumps(feature["geometry"])  # geometry dalam format GeoJSON
+
+            query = text(
+                insert into data_desa_bkl (
+                    kdppum, namobj, remark, kdpbps, fcode, luaswh, uupp,
+                    srs_id, lcode, metadata, kdebps, kdepum, kdcbps, kdcpum,
+                    kdbbps, kdbpum, wadmkd, wiadkd, wadmkc, wiadkc, wadmkk,
+                    wiadkk, wadmpr, wiadpr, tipadm, shape_leng, shape_area, geom
+                )
+                values (
+                    :kdppum, :namobj, :remark, :kdpbps, :fcode, :luaswh, :uupp,
+                    :srs_id, :lcode, :metadata, :kdebps, :kdepum, :kdcbps, :kdcpum,
+                    :kdbbps, :kdbpum, :wadmkd, :wiadkd, :wadmkc, :wiadkc, :wadmkk,
+                    :wiadkk, :wadmpr, :wiadpr, :tipadm, :shape_leng, :shape_area,
+                    ST_SetSRID(ST_Force2D(ST_GeomFromGeoJSON(:geom)), 4326)
+                )
+            )
+
+            conn.execute(query, {
+                "kdppum": props.get("kdppum"),
+                "namobj": props.get("namobj"),
+                "remark": props.get("remark"),
+                "kdpbps": props.get("kdpbps"),
+                "fcode": props.get("fcode"),
+                "luaswh": props.get("luaswh"),
+                "uupp": props.get("uupp"),
+                "srs_id": props.get("srs_id"),
+                "lcode": props.get("lcode"),
+                "metadata": props.get("metadata"),
+                "kdebps": props.get("kdebps"),
+                "kdepum": props.get("kdepum"),
+                "kdcbps": props.get("kdcbps"),
+                "kdcpum": props.get("kdcpum"),
+                "kdbbps": props.get("kdbbps"),
+                "kdbpum": props.get("kdbpum"),
+                "wadmkd": props.get("wadmkd"),
+                "wiadkd": props.get("wiadkd"),
+                "wadmkc": props.get("wadmkc"),
+                "wiadkc": props.get("wiadkc"),
+                "wadmkk": props.get("wadmkk"),
+                "wiadkk": props.get("wiadkk"),
+                "wadmpr": props.get("wadmpr"),
+                "wiadpr": props.get("wiadpr"),
+                "tipadm": props.get("tipadm"),
+                "shape_leng": props.get("shape_leng"),
+                "shape_area": props.get("shape_area"),
+                "geom": geom
+            })
+
+    return "Import selesai!" """
+
 @app.route('/')
 def index():
     return redirect(url_for('user_home'))
@@ -127,12 +186,12 @@ def simpan_pasien():
         newId = maxId + 1
     
         # auto set cluster menjadi (noise) & cari id_desa dari nama desa
-        queryDes = text("SELECT id_desa FROM data_desa WHERE UPPER(nama_desa) = :desa LIMIT 1")
+        queryDes = text("SELECT id_desa FROM data_desa_bkl WHERE UPPER(nama_desa) = :desa LIMIT 1")
         resDes = conn.execute(queryDes, {"desa": nameDes})
         desId = resDes.scalar()
 
         if desId is None:
-            return jsonify({"success": False, "message": f"Nama Desa '{nameDes}' tidak ditemukan di data_desa"}), 400
+            return jsonify({"success": False, "message": f"Nama Desa '{nameDes}' tidak ditemukan di data_desa_bkl"}), 400
 
         # simpan ke database
         queryIns = text("""
@@ -497,12 +556,12 @@ def tambah_data_pasien():
         newId = maxId + 1
     
         # auto set cluster menjadi (noise) & cari id_desa dari nama desa
-        queryDes = text("SELECT id_desa FROM data_desa WHERE UPPER(nama_desa) = :desa LIMIT 1")
+        queryDes = text("SELECT id_desa FROM data_desa_bkl WHERE UPPER(nama_desa) = :desa LIMIT 1")
         resDes = conn.execute(queryDes, {"desa": nameDes})
         desId = resDes.scalar()
 
         if desId is None:
-            return jsonify({"success": False, "message": f"Nama Desa '{nameDes}' tidak ditemukan di data_desa"}), 400
+            return jsonify({"success": False, "message": f"Nama Desa '{nameDes}' tidak ditemukan di data_desa_bkl"}), 400
 
         # simpan ke database
         queryIns = text("""
@@ -541,41 +600,42 @@ def tambah_data_pasien():
 # cari wilayah berdasarkan koordinat
 @app.route('/cari-wilayah', methods=['POST'])
 def cariWilayah():
-    dataWil = request.get_json()
-    lat, lng = float(dataWil['lat']), float(dataWil['lng'])
-    poinWil = Point(lng, lat)
+    data = request.get_json()
+    lat = data.get('lat')
+    lon = data.get('lon')
 
-    # geojson desa
-    with open('data/hasil_desa_bangkalan.geojson') as f:
-        geoDesa = json.load(f)
-    
-    for fitur in geoDesa['features']:
-        if shape(fitur['geometry']).contains(poinWil):
-            namaDesa = fitur['properties']['namobj'].lower()
+    try:
+        with engine.begin() as conn:
+            # Query untuk mencari desa yang mengandung titik menggunakan ST_Intersects
+            query = text("""
+                SELECT id_desa, nama_desa, kecamatan, puskesmas, ST_AsGeoJSON(geom) AS geometry
+                FROM data_desa_bkl
+                WHERE ST_Intersects(
+                    geom,
+                    ST_SetSRID(ST_Point(:lon, :lat), 4326)
+                )
+                LIMIT 1
+            """)
+            row = conn.execute(query, {"lat": lat, "lon": lon}).fetchone()
 
-            # cek ke supabase
-            with engine.connect() as conn:
-                query = text(""" SELECT id_desa, kecamatan, puskesmas FROM data_desa WHERE LOWER(nama_desa) LIKE :nama_desa LIMIT 1 """)
+            if not row:
+                return jsonify({"error": "Titik tidak ada di desa manapun"}), 404
 
-                resultWil = conn.execute(query, {"nama_desa": f"%{namaDesa}%"}).fetchone()
+            fitur = {
+                "type": "Feature",
+                "geometry": json.loads(row.geometry),
+                "properties": {
+                    "id_desa": row.id_desa,
+                    "nama_desa": row.nama_desa,
+                    "kecamatan": row.kecamatan,
+                    "puskesmas": row.puskesmas
+                }
+            }
+            
+            return jsonify(fitur)
 
-                if resultWil:
-                    return jsonify({
-                        'nama_desa': namaDesa,
-                        'kecamatan': resultWil.kecamatan,
-                        'puskesmas' : resultWil.puskesmas,
-                        'id_desa': resultWil.id_desa
-                    })
-                else:
-                    return jsonify({
-                        'nama_desa': namaDesa,
-                        'kecamatan': '',
-                        'puskesmas': '',
-                        'id_desa': None,
-                        'error' : 'wilayah tidak cocok dengan database'
-                    })
-        
-    return jsonify({'error': 'Wilayah tidak ditemukan'}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # ambil data pasien berdasarkan id_pasien
 @app.route('/ambil-data-pasien/<int:id_pasien>')
@@ -1003,12 +1063,14 @@ def hapus_permanen(id):
 def update_koordinat_permanen(id):
     try:
         data = request.get_json()
-        latitude = data.get("latitude")
-        longitude = data.get("longitude")
+        print("Data masuk update koordinat permanen: ", data)
+        
+        latitude = float(data.get("latitude"))
+        longitude = float(data.get("longitude"))
         desa_kelurahan = data.get("desa_kelurahan")
         kecamatan = data.get("kecamatan")
         puskesmas = data.get("puskesmas")
-        id_desa = data.get("id_desa")
+        id_desa = int(data.get("id_desa")) if data.get("id_desa") else None
 
         if latitude is None or longitude is None:
             return jsonify({"success": False, "message": "Koordinat tidak lengkap"}), 400
@@ -1037,6 +1099,7 @@ def update_koordinat_permanen(id):
 
         return jsonify({"success": True})
     except Exception as e:
+        print("ERROR update-koordinat-permanen:", str(e))
         return jsonify({"success": False, "message": str(e)}), 500
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@
         width: 100%;
         height: calc(100vh - 150px);
       }
-      .leflet-control-custom button {
+      .leaflet-control-custom button {
         background-color: #007bff;
         color: white;
         border: none;
@@ -28,15 +28,15 @@
         font-size: 18px;
         cursor: pointer;
       }
-      .leflet-control-custom button:hover {
+      .leaflet-control-custom button:hover {
         background-color: #0056b3;
       }
 
-      .custom-popup .leflet-popup-content-wrapper {
+      .custom-popup .leaflet-popup-content-wrapper {
         border-radius: 12px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
-      .custom-popup .leflet-popup-content {
+      .custom-popup .leaflet-popup-content {
         margin: 0;
         padding: 0;
       }
@@ -158,7 +158,7 @@
               .then((res) => res.json())
               .then((data) => {
                 data.data.forEach((p) => {
-                  const marker = L.marker([p.latitude, p.longitude], { draggale: false }).addTo(markerLayer);
+                  const marker = L.marker([p.latitude, p.longitude], { draggable: false }).addTo(markerLayer);
                   marker.bindPopup(`
                     <div style="font-family: 'Poppins', sans-serif; font-size: 13px; padding: 5px 10px;">
                       <div style="font-weight: bold; font-size: 14px; color: #007bff;">
@@ -348,11 +348,49 @@
             .openPopup();
         }
 
-        function isiOtoWilayahUni(lat, lng, form = null) {
+        function isiOtoWilayahUni(lat, lon, form = null) {
           return fetch("/cari-wilayah", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lat: lat, lng: lng }),
+            body: JSON.stringify({ lat: lat, lon: lon }),
+          })
+            .then((res) => {
+              if (!res.ok) throw new Error("Gagal mengambil data wilayah");
+              return res.json();
+            })
+            .then((dataWil) => {
+              console.log("Wilayah Baru: ", dataWil);
+
+              if (dataWil.error) {
+                throw new Error(dataWil.error);
+              }
+
+              const prop = dataWil.properties;
+
+              if (prop && prop.id_desa !== null && prop.id_desa !== -1) {
+                if (form) {
+                  setSelectValUni(form["desa_kelurahan"], prop.nama_desa.toLowerCase());
+                  setSelectValUni(form["kecamatan"], prop.kecamatan.toLowerCase());
+                  setSelectValUni(form["puskesmas"], prop.puskesmas.toLowerCase());
+                }
+
+                return {
+                  nama_desa: prop.nama_desa,
+                  kecamatan: prop.kecamatan,
+                  puskesmas: prop.puskesmas,
+                  id_desa: prop.id_desa,
+                };
+              } else {
+                throw new Error("Wilayah tidak ditemukan");
+              }
+            });
+        }
+
+        /* function isiOtoWilayahUni(lat, lon, form = null) {
+          return fetch("/cari-wilayah", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lat: lat, lon: lon }),
           })
             .then((res) => res.json())
             .then((dataWil) => {
@@ -375,7 +413,7 @@
                 throw new Error("Wilayah tidak ditemukan");
               }
             });
-        }
+        } */
 
         // fungsi edit lokasi
         function editLokasi(id) {
