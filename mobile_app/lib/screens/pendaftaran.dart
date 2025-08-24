@@ -101,11 +101,14 @@ class _PendaftaranPasienScreenState extends State<PendaftaranPasienScreen> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+
+      final prop = data['properties'];
+
       setState(() {
-        desaCtrl.text = data['nama_desa'] ?? '';
-        kecamatanCtrl.text = data['kecamatan'] ?? '';
-        puskesmasCtrl.text = data['puskesmas'] ?? '';
-        idDesa = data['id_desa'];
+        desaCtrl.text = prop['nama_desa'] ?? '';
+        kecamatanCtrl.text = prop['kecamatan'] ?? '';
+        puskesmasCtrl.text = prop['puskesmas'] ?? '';
+        idDesa = prop['id_desa'];
       });
     } else {
       print("Gagal mengambil data lokasi: ${response.body}");
