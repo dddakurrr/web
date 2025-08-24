@@ -348,11 +348,11 @@
             .openPopup();
         }
 
-        function isiOtoWilayahUni(lat, lon, form = null) {
+        function isiOtoWilayahUni(lat, lng, form = null) {
           return fetch("/cari-wilayah", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lat: lat, lon: lon }),
+            body: JSON.stringify({ lat: lat, lng: lng }),
           })
             .then((res) => {
               if (!res.ok) throw new Error("Gagal mengambil data wilayah");
@@ -385,35 +385,6 @@
               }
             });
         }
-
-        /* function isiOtoWilayahUni(lat, lon, form = null) {
-          return fetch("/cari-wilayah", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lat: lat, lon: lon }),
-          })
-            .then((res) => res.json())
-            .then((dataWil) => {
-              console.log("Wilayah Baru: ", dataWil);
-
-              if (!dataWil.error && dataWil.id_desa !== null && dataWil.id_desa !== -1) {
-                if (form) {
-                  setSelectValUni(form["desa_kelurahan"], dataWil.nama_desa.toLowerCase());
-                  setSelectValUni(form["kecamatan"], dataWil.kecamatan.toLowerCase());
-                  setSelectValUni(form["puskesmas"], dataWil.puskesmas.toLowerCase());
-                }
-
-                return {
-                  nama_desa: dataWil.nama_desa,
-                  kecamatan: dataWil.kecamatan,
-                  puskesmas: dataWil.puskesmas,
-                  id_desa: dataWil.id_desa,
-                };
-              } else {
-                throw new Error("Wilayah tidak ditemukan");
-              }
-            });
-        } */
 
         // fungsi edit lokasi
         function editLokasi(id) {

@@ -280,11 +280,11 @@
           console.log("Setel Nilai", selectEl.nama, "ke", value);
         }
 
-        function isiOtoWilayahUni(lat, lon, form = null) {
+        function isiOtoWilayahUni(lat, lng, form = null) {
           return fetch("/cari-wilayah", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lat: lat, lon: lon }),
+            body: JSON.stringify({ lat: lat, lng: lng }),
           })
             .then((res) => {
               if (!res.ok) throw new Error("Gagal mengambil data wilayah");
@@ -469,9 +469,17 @@
                 map.removeLayer(markerTambah);
                 markerTambah = null;
               }
-              Swal.fire("Mode Tambah dinonaktifkan");
+              Swal.fire({
+                title: "Mode Tambah dinonaktifkan",
+                icon: "info",
+                customClass: { popup: "small-swal-popup" },
+              });
             } else {
-              Swal.fire("Klik pada peta untuk menentukan lokasi pasien baru");
+              Swal.fire({
+                title: "Klik pada peta untuk menentukan lokasi pasien baru",
+                icon: "info",
+                customClass: { popup: "small-swal-popup" },
+              });
               addMode = true;
               map.getContainer().style.cursor = "crosshair";
             }
@@ -629,6 +637,25 @@
                     text: "Wilayah tidak ditemukan, harap pilih manual",
                     icon: "warning",
                     confirmButtonText: "OKE",
+                    customClass: {
+                      popup: "small-swal-popup",
+                    },
+                  });
+                });
+
+                markerTambah.on("dragend", function (e) {
+                  const newLatLng = e.target.getLatLng();
+                  isiOtoWilayahUni(newLatLng.lat, newLatLng.lng, formEl).catch((err) => {
+                    console.warn(err.message);
+                    Swal.fire({
+                      title: "Peringatan",
+                      text: "Wilayah tidak ditemukan, harap pilih manual",
+                      icon: "warning",
+                      confirmButtonText: "OKE",
+                      customClass: {
+                        popup: "small-swal-popup",
+                      },
+                    });
                   });
                 });
 
@@ -637,8 +664,10 @@
 
                   const formData = new FormData(e.target);
                   const data = Object.fromEntries(formData.entries());
-                  data.latitude = latlng.lat;
-                  data.longitude = latlng.lng;
+
+                  const ambilLatLng = markerTambah.getLatLng();
+                  data.latitude = ambilLatLng.lat;
+                  data.longitude = ambilLatLng.lng;
 
                   fetch("/tambah-data-pasien", {
                     method: "POST",

@@ -602,7 +602,7 @@ def tambah_data_pasien():
 def cariWilayah():
     data = request.get_json()
     lat = data.get('lat')
-    lon = data.get('lon')
+    lng = data.get('lng')
 
     try:
         with engine.begin() as conn:
@@ -612,11 +612,11 @@ def cariWilayah():
                 FROM data_desa_bkl
                 WHERE ST_Intersects(
                     geom,
-                    ST_SetSRID(ST_Point(:lon, :lat), 4326)
+                    ST_SetSRID(ST_Point(:lng, :lat), 4326)
                 )
                 LIMIT 1
             """)
-            row = conn.execute(query, {"lat": lat, "lon": lon}).fetchone()
+            row = conn.execute(query, {"lat": lat, "lng": lng}).fetchone()
 
             if not row:
                 return jsonify({"error": "Titik tidak ada di desa manapun"}), 404
