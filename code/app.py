@@ -20,6 +20,7 @@ from scipy.spatial.distance import pdist, squareform
 from kneed import KneeLocator
 from sqlalchemy import create_engine, text
 from flask_cors import CORS
+from datetime import datetime, timedelta
 
 # untuk mengatur flask dimana letak file yang sedang berjalan
 app = Flask(__name__)
@@ -317,6 +318,13 @@ def jarak():
 # rute ke dbscan
 @app.route('/dbscan', methods = ['GET', 'POST'])
 def hitung():
+    # untuk menghapus history dbscan
+    if 'created_at' in session:
+        created = datetime.fromisoformat(session['created_at'])
+        if datetime.utcnow() - created > timedelta(minutes=3):
+            session.pop('dbscan_history', None)
+            session.pop('created_at', None)
+
     # Query untuk mengambil data pasien
     query_pasien = "SELECT * FROM data_pasien ORDER BY id_pasien ASC;"
     df_pasien = pd.read_sql(query_pasien, engine)
@@ -419,6 +427,7 @@ def hitung():
             # simpan history ke session
             if 'dbscan_history' not in session:
                 session['dbscan_history'] = []
+                session['created_at'] = datetime.utcnow().isoformat()
             
             session['dbscan_history'].append({
                 'epsilon':epsilon_input,
