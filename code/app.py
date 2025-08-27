@@ -326,6 +326,7 @@ def hitung():
 
     # preprocessing
     df_ohe = pd.get_dummies(df_pasien_baru, columns=['kunjungan','jenis_kelamin','tindak_lanjut','anti_biotika','faktor_risiko'], dtype=int)
+
     scaler = MinMaxScaler()
     df_minmax = scaler.fit_transform(df_ohe)
 
@@ -379,16 +380,12 @@ def hitung():
                 
                 # untuk updata kolom cluster dari hasil dbscan ke dalam tabel data_pasien
                 with engine.begin() as connection:
-                    for i, labels in enumerate(cluster_labels):
-                        cluster_pasien = int(labels)
-                        id_pasien = int(df_pasien.iloc[i]['id_pasien'])
-                        connection.execute(text("UPDATE data_pasien SET cluster = :cluster WHERE id_pasien = :id"), {"cluster": cluster_pasien, "id": id_pasien})
-                    
-                        # Cek hasil update langsung
-                        result = connection.execute(text("SELECT cluster, COUNT(*) FROM data_pasien GROUP BY cluster"))
-                        print("Hasil update cluster:")
-                        for row in result:
-                            print(row)
+                    update_cluster = text("UPDATE data_pasien SET cluster = :cluster WHERE id_pasien = :id")
+                    data_update = [
+                        {"cluster": int(labels), "id": int(df_pasien.iloc[i]['id_pasien'])}
+                        for i, labels in enumerate(cluster_labels)
+                    ]
+                    connection.execute(update_cluster, data_update)
                 
                 # menghitung berapa banyak jumlah cluster yang terbentuk dan jumlah data yang masuk kedalam cluster noise
                 n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
@@ -403,8 +400,13 @@ def hitung():
                 if n_clusters > 1:
                     filtered = cluster_labels != -1
                     filtered_data = df_minmax[filtered]
-                    silhouette_scored = squareform(pdist(filtered_data))
-                    silhouette_sil = round(silhouette_score(silhouette_scored, cluster_labels[filtered], metric='precomputed'), 4)
+                    filtered_labels = cluster_labels[filtered]
+
+                    # cek syarat minimal 2 cluster dan setiap cluster minimal ada 2 data
+                    unique_clusters = set(filtered_labels)
+                    if len(unique_clusters) > 1 and all(list(filtered_labels).count(c) > 1 for c in unique_clusters):
+                        silhouette_sil = round(silhouette_score(filtered_data, filtered_labels, metric='euclidean'), 4)
+                    
                 
                 # menyimpan hasil dbscan kedalam variable 
                 hasil_dbscan = {
