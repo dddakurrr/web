@@ -346,7 +346,7 @@ def hitung():
     min_k = max_k = 0
     epsilon_input = None
     minpts_input = int(request.form.get('minpts', 3))   # default minpts yakni 3
-    hasil_dbscan = None
+    """ hasil_dbscan = None """
     n_clusters = None
     n_noise = None
     jumlah_per_cluster = None
